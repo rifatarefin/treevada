@@ -3,6 +3,7 @@ from lark import Lark
 import tempfile
 import subprocess
 import os
+import matlab.engine
 
 """
 This file gives  classes to use as "Oracles" in the Arvada algorithm.
@@ -19,43 +20,59 @@ class ExternalOracle:
     we conservatively assume the oracle returns True.
     """
 
-    def __init__(self, command):
+    def __init__(self):
         """
         `command` is a string representing the oracle command, i.e. `command` = "readpng"
         in the oracle call:
             $ readpng <MY_FILE>
         """
-        self.command = command
+        self.eng = matlab.engine.start_matlab()
+        self.eng.warning('off','all', nargout = 0)
+        # self.command = command
         self.cache_set = {}
         self.parse_calls = 0
         self.real_calls = 0
         self.time_spent = 0
+    
+    def close(self):
+        self.eng.quit()
 
     def _parse_internal(self, string, timeout = 3):
         """
         Does the work of calling the subprocess.
         """
         self.real_calls +=1
-        FNULL = open(os.devnull, 'w')
-        f = tempfile.NamedTemporaryFile()
+        # FNULL = open(os.devnull, 'w')
+        f = tempfile.NamedTemporaryFile(suffix='.mdl')
         f.write(bytes(string, 'utf-8'))
         f_name = f.name
         f.flush()
+        # x = open(f.name).read()
+        # print(x)
         try:
             # With check = True, throws a CalledProcessError if the exit code is non-zero
-            subprocess.run([self.command, f_name], stdout=FNULL, stderr=FNULL, timeout=timeout, check=True)
+            # subprocess.run([self.command, f_name], stdout=FNULL, stderr=FNULL, timeout=timeout, check=True)
+            self.eng.load_system(f_name)
+            model = self.eng.bdroot()
+            self.eng.slreportgen.utils.compileModel(model, nargout = 0)
+            self.eng.slreportgen.utils.uncompileModel(model, nargout = 0)
+            self.eng.close_system(f_name, nargout = 0)
             f.close()
-            FNULL.close()
+            # FNULL.close()
             return True
-        except subprocess.CalledProcessError as e:
+        except error:
+            # print(error)
             f.close()
-            FNULL.close()
             return False
-        except subprocess.TimeoutExpired as e:
-            print(f"Caused timeout: {string}")
-            f.close()
-            FNULL.close()
-            return True
+        # except subprocess.CalledProcessError as e:
+        #     f.close()
+        #     FNULL.close()
+        #     return False
+        # except subprocess.TimeoutExpired as e:
+        #     print(f"Caused timeout: {string}")
+        #     f.close()
+        #     FNULL.close()
+        #     return True
 
     def parse(self, string, timeout=3):
         """

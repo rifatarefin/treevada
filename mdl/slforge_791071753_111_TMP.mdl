@@ -1,0 +1,88 @@
+Model {
+Name toy
+System {
+Name toy
+Block {
+BlockType Abs
+Name "cfblk1"
+SID "1"
+Position [30, 30, 90, 90]
+ZOrder 1
+SaturateOnIntegerOverflow off
+}
+Block {
+BlockType Terminator
+Name "cfblk2"
+SID "2"
+Position [190, 30, 250, 90]
+ZOrder 2
+}
+Block {
+BlockType Scope
+Name "cfblk3"
+SID "3"
+Ports [1]
+Position [350, 30, 410, 90]
+ZOrder 3
+NumInputPorts "1"
+Floating off
+}
+Block {
+BlockType Scope
+Name "cfblk4"
+SID "4"
+Ports [1]
+Position [510, 30, 570, 90]
+ZOrder 4
+NumInputPorts "1"
+Floating off
+}
+Block {
+BlockType RandomNumber
+Name "cfblk5"
+SID "5"
+Position [670, 30, 730, 90]
+ZOrder 5
+Mean "[-56565.177090]"
+Variance "[1458.726149]"
+Seed "[984652969.000000]"
+SampleTime "0.1"
+}
+Line {
+ZOrder 5
+SrcBlock "cfblk5"
+SrcPort 1
+Points [0, 0]
+Branch {
+ZOrder 1
+Points [0, -35; -720, 0]
+DstBlock "cfblk1"
+DstPort 1
+}
+Branch {
+ZOrder 6
+Points [0, -35; -400, 0]
+DstBlock "cfblk3"
+DstPort 1
+}
+}
+Line {
+ZOrder 6
+SrcBlock "cfblk1"
+SrcPort 1
+Points [0, 0]
+Branch {
+ZOrder 2
+Points [85, 0; 0, 35; 315, 0]
+DstBlock "cfblk4"
+DstPort 1
+}
+Branch {
+ZOrder 4
+DstBlock "cfblk2"
+DstPort 1
+}
+
+}
+}
+}

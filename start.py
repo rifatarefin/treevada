@@ -267,6 +267,7 @@ def build_trees(oracle, leaves):
 
     s = time.time()
     # Main algorithm loop. Iteratively increase the length of groups allowed from MIN_GROUP_LEN to MAX_GROUP_LEN
+    print("Group size: ", MAX_GROUP_LEN)
     for group_size in range(MIN_GROUP_LEN, MAX_GROUP_LEN):
         count = 1
         updated = True

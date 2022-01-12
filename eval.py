@@ -38,8 +38,8 @@ def main_internal(external_folder, log_file, random_guides=False):
 
     main(parser_command, log_file, test_folder)
 
-def main(oracle_cmd, log_file_name, test_examples_folder ):
-    oracle = ExternalOracle(oracle_cmd)
+def main(log_file_name, test_examples_folder ):
+    oracle = ExternalOracle()
 
 
     real_recall_set = []
@@ -76,13 +76,16 @@ def main(oracle_cmd, log_file_name, test_examples_folder ):
 
         print(f"Precision set (size {len(precision_set)}):", file=f)
         print("Eval of precision:")
-        for example in tqdm(precision_set):
+        for i, example in enumerate(tqdm(precision_set)):
+            file_nm = "fuzz/model" + str(i) +".mdl"
+            with open(file_nm,"w") as fl:
+                fl.write(example)
             try:
                 oracle.parse(example, timeout=10)
-                print("   ", example, file=f)
+                print(i, ". PASSED\n", example, file=f)
                 num_precision_parsed += 1
             except Exception as e:
-                print("   ", example, " <----- FAILURE", file=f)
+                print(i, ". FAILED\n", example, " <----- FAILURE", file=f)
                 continue
 
         num_recall_parsed = 0
@@ -113,7 +116,7 @@ def main(oracle_cmd, log_file_name, test_examples_folder ):
 
         print(f'Example gen time: {example_gen_time - start_time}', file=f)
         print(f'Scoring time: {time.time() - example_gen_time}', file=f)
-
+        # oracle.close()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -123,7 +126,7 @@ if __name__ == '__main__':
 
     internal_parser.add_argument('bench_folder', help='folder containing the benchmark', type=str)
     internal_parser.add_argument('log_file', help='log file output from search.py', type=str)
-    external_parser.add_argument('oracle_cmd', help='the oracle command; should be invocable on a filename via `oracle_cmd filename`, and return a non-zero exit code on invalid inputs', type=str)
+    # external_parser.add_argument('oracle_cmd', help='the oracle command; should be invocable on a filename via `oracle_cmd filename`, and return a non-zero exit code on invalid inputs', type=str)
     external_parser.add_argument('examples_dir', help='folder containing the test (recall) examples', type=str)
     external_parser.add_argument('log_file', help='log file output from search.py', type=str)
     external_parser.add_argument('-n', '--precision_set_size', help='size of precision set to sample from learned grammar (default 1000)', type=int, default=1000)
@@ -134,7 +137,7 @@ if __name__ == '__main__':
     elif args.mode == 'external':
         if args.precision_set_size is not None:
             PRECISION_SIZE = args.precision_set_size
-        main(args.oracle_cmd, args.log_file, args.examples_dir)
+        main(args.log_file, args.examples_dir)
     else:
         parser.print_help()
         exit(1)
