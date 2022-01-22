@@ -60,7 +60,7 @@ class ExternalOracle:
             f.close()
             # FNULL.close()
             return True
-        except error:
+        except:
             # print(error)
             f.close()
             return False
