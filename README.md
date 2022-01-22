@@ -66,16 +66,26 @@ $ ./bc-example/bc-wrapper.sh bc-example/train_set/guide-0.ex
 
 You can learn a grammar from the oracle `./bc-example/bc-wrapper` and the provided examples in `bc-example/train_set` as follows:
 ```
-$ python3 search.py external .bc-example/bc-wrapper.sh bc-example/train_set bc-example.log
+$ python3 search.py external ./bc-example/bc-wrapper.sh bc-example/train_set bc-example.log
 ```
 (this took around 20 seconds on our machine)
 
 The grammar is stored as a pickled object in `bc-example.log.gramdict`. The `eval.py` utility will print out the grammar in `bc-example.log.eval` after running: 
 ```
-$ python3 search.py external .bc-example/bc-wrapper.sh bc-example/test_set bc-example.log 100
+$ python3 eval.py external -n 100 ./bc-example/bc-wrapper.sh bc-example/test_set bc-example.log 
 ```
 
 Over 5 runs, we witnessed 4 runs with 1.0 Recall and 1.0 Precision, and 1 run with 0.95 Recall and 1.0 Precision.
+
+#### Edit
+
+Modified for Simulink oracle only, external oracle is removed from command. `search.py` or `eval.py` could be run using the following way:
+```
+$ python3 search.py external bc-example/train_set bc-example.log
+```
+```
+$ python3 eval.py external -n 100 bc-example/test_set bc-example.log 
+```
 
 ### Pretokenization
 
