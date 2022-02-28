@@ -13,6 +13,7 @@ from replacement_utils import get_strings_with_replacement, get_strings_with_rep
     lvl_n_derivable
 
 from next_tid import allocate_tid
+from memory_profiler import profile
 
 """
 Bulk of the Arvada algorithm.
@@ -69,6 +70,7 @@ def check_recall(oracle, grammar: Grammar):
             return False
     return True
 
+@profile
 def build_start_grammar(oracle, leaves, bbl_bounds = (3,10)):
     """
     ORACLE is a CachingOracle or ExternalOracle with a .parse method, which

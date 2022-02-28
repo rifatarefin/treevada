@@ -93,7 +93,7 @@ def main(guide_examples_folder,  log_file_name):
 
     average_guide_len = sum([len(g) for g in guide_examples])/len(guide_examples)
     if average_guide_len > 40:
-        bbl_bounds = (6, 20)
+        bbl_bounds = (8, 16)                #(6,20)
     else:
         bbl_bounds = (3, 10)
 
@@ -105,6 +105,7 @@ def main(guide_examples_folder,  log_file_name):
         print('Building the starting grammar...'.ljust(50), end='\r')
         start_time = time.time()
         start_grammar: Grammar = build_start_grammar(oracle, guide_examples, bbl_bounds)
+        # oracle.close()
         build_time = time.time() - start_time
 
         oracle_time_spent = oracle.time_spent

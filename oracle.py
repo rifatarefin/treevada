@@ -26,7 +26,7 @@ class ExternalOracle:
         in the oracle call:
             $ readpng <MY_FILE>
         """
-        self.eng = matlab.engine.start_matlab()
+        self.eng = matlab.engine.connect_matlab()
         self.eng.warning('off','all', nargout = 0)
         # self.command = command
         self.cache_set = {}
@@ -43,12 +43,16 @@ class ExternalOracle:
         """
         self.real_calls +=1
         # FNULL = open(os.devnull, 'w')
-        f = tempfile.NamedTemporaryFile(suffix='.mdl')
+        f = tempfile.NamedTemporaryFile(suffix='.mdl', dir='./Tmp', delete=False)
         f.write(bytes(string, 'utf-8'))
         f_name = f.name
         f.flush()
+        f.close()
         # x = open(f.name).read()
-        # print(x)
+        
+        # case 1: compiles and uncompiles fine
+        # case 2: doesn't uncompile
+        # case 3: doesn't compile
         try:
             # With check = True, throws a CalledProcessError if the exit code is non-zero
             # subprocess.run([self.command, f_name], stdout=FNULL, stderr=FNULL, timeout=timeout, check=True)
@@ -57,13 +61,30 @@ class ExternalOracle:
             self.eng.slreportgen.utils.compileModel(model, nargout = 0)
             self.eng.slreportgen.utils.uncompileModel(model, nargout = 0)
             self.eng.close_system(f_name, nargout = 0)
-            f.close()
+            if os.path.exists(f_name):
+                os.remove(f_name)
             # FNULL.close()
             return True
         except:
             # print(error)
-            f.close()
-            return False
+            # f.close()
+            try:
+                if os.path.exists(f_name):
+                    os.remove(f_name)
+            finally:
+                mat = matlab.engine.find_matlab()
+                print("Engine")
+                print(mat)
+                if len(mat)==0:
+                    with tempfile.NamedTemporaryFile(suffix='.mdl', dir='./Crash', delete=False) as fi:
+                        fi.write(bytes(string, 'utf-8'))
+                        fi.flush()
+                    print("Before")
+                    self.eng = matlab.engine.connect_matlab()
+                    self.eng.warning('off','all', nargout = 0)
+                    print("Created")
+                    return True
+                return False
         # except subprocess.CalledProcessError as e:
         #     f.close()
         #     FNULL.close()
