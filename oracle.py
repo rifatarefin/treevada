@@ -68,12 +68,16 @@ class ExternalOracle:
                     with tempfile.NamedTemporaryFile(suffix='.mdl', dir='./Crash', delete=False) as fi:
                         fi.write(bytes(string, 'utf-8'))
                         fi.flush()
-                    self.eng = matlab.engine.connect_matlab()
-                    self.eng.warning('off','all', nargout = 0)
-                    print("Created Engine")
+                    
                     return True
             except:
                 print("doesn't compile")
+                mat = matlab.engine.find_matlab()
+                if len(mat)==0:
+                    with tempfile.NamedTemporaryFile(suffix='.mdl', dir='./Crash/compiletime', delete=False) as fi:
+                        fi.write(bytes(string, 'utf-8'))
+                        fi.flush()
+                    return True
                 return False
             try:
                 self.eng.close_system(f_name, nargout = 0)
@@ -85,9 +89,12 @@ class ExternalOracle:
             # FNULL.close()
             return True
         except:
-            # print(error)
-            # f.close()
-            
+            print("doesn't load")
+            return False
+
+        finally:
+            if os.path.exists(f_name):
+                os.remove(f_name)
             mat = matlab.engine.find_matlab()
             print("Engine")
             print(mat)
@@ -96,11 +103,6 @@ class ExternalOracle:
                 self.eng = matlab.engine.connect_matlab()
                 self.eng.warning('off','all', nargout = 0)
                 print("Created")
-                
-            return False
-        finally:
-            if os.path.exists(f_name):
-                os.remove(f_name)
         # except subprocess.CalledProcessError as e:
         #     f.close()
         #     FNULL.close()
