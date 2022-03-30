@@ -86,11 +86,11 @@ def build_start_grammar(oracle, leaves, bbl_bounds = (3,10)):
     global MIN_GROUP_LEN 
     global MAX_GROUP_LEN
     MIN_GROUP_LEN, MAX_GROUP_LEN = bbl_bounds
-    print('Building the starting trees...'.ljust(50), end='\r')
+    print('Building the starting trees...'.ljust(50))
     trees, classes = build_trees(oracle, leaves)
-    print('Building initial grammar...'.ljust(50), end='\r')
+    print('Building initial grammar...'.ljust(50))
     grammar = build_grammar(trees)
-    print('Coalescing nonterminals...'.ljust(50), end='\r')
+    print('Coalescing nonterminals...'.ljust(50))
     s = time.time()
     grammar, new_trees, coalesce_caused = coalesce(oracle, trees, grammar)
     grammar, new_trees, partial_coalesces = coalesce_partial(oracle, new_trees, grammar)
@@ -98,7 +98,7 @@ def build_start_grammar(oracle, leaves, bbl_bounds = (3,10)):
     s = time.time()
     grammar = expand_tokens(oracle, grammar, new_trees)
     EXPAND_TIME += time.time() - s
-    print('Minimizing initial grammar...'.ljust(50), end='\r')
+    print('Minimizing initial grammar...'.ljust(50))
     s = time.time()
     grammar = minimize(grammar)
     MINIMIZE_TIME += time.time() - s
@@ -279,7 +279,7 @@ def build_trees(oracle, leaves):
             TIME_GROUPING += time.time() - group_start
             updated, nlg = False, len(all_groupings)
             for i, (grouping, the_score) in enumerate(all_groupings):
-                print(('[Group len %d] Bubbling iteration %d (%d/%d)...' % (group_size, count, i + 1, nlg)).ljust(50), end='\r')
+                print(('[Group len %d] Bubbling iteration %d (%d/%d)...' % (group_size, count, i + 1, nlg)).ljust(50))
                 ### Perform the bubble
                 if isinstance(grouping, Bubble):
                     new_trees = apply(grouping, best_trees)

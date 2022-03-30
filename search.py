@@ -1,4 +1,5 @@
 import argparse
+from glob import glob
 import random, sys, os, time
 from input import parse_input
 from parse_tree import ParseTree, ParseNode
@@ -17,18 +18,26 @@ See __main__ dispatch at the bottom for usage.
 USE_PRETOKENIZATION = True
 
 GROUP_PUNCTUATION = False
-SPLIT_UPPER_AND_LOWER = True
+SPLIT_UPPER_AND_LOWER = False
 
+quote = False
 def approx_tokenize(guide_raw:str):
     def get_category(c):
-        if not SPLIT_UPPER_AND_LOWER and c in string.ascii_letters:
-            return "LETTER"
+        global quote
+        if not SPLIT_UPPER_AND_LOWER:                                                       #everything in quote should be grouped
+            if c in string.ascii_letters or c in string.digits:
+                return "LETTER"
+            if c in "\"":
+                quote = not quote
+                return "LETTER"
+            if quote==True:
+                return "LETTER"
         if SPLIT_UPPER_AND_LOWER and c in string.ascii_uppercase:
             return "UPPER"
         if SPLIT_UPPER_AND_LOWER and c in string.ascii_lowercase:
             return "LOWER"
-        if c in string.digits:
-            return "DIGIT"
+        # if c in string.digits:
+        #     return "DIGIT"
         if GROUP_PUNCTUATION and c in string.punctuation:
             return "PUNCTUATION"
         if c in string.whitespace:
@@ -87,6 +96,8 @@ def main(guide_examples_folder,  log_file_name):
         guide_raw = open(full_filename).read()
         if USE_PRETOKENIZATION:
             guide = approx_tokenize(guide_raw)
+            for i in guide:
+                print(i.payload)
         else:
             guide = [ParseNode(c, True, []) for c in guide_raw]
         guide_examples.append(guide)
@@ -102,7 +113,7 @@ def main(guide_examples_folder,  log_file_name):
     with open(log_file_name, 'w+') as f:
 
         # Build the starting grammars and test them for compilation
-        print('Building the starting grammar...'.ljust(50), end='\r')
+        print('Building the starting grammar...'.ljust(50))
         start_time = time.time()
         start_grammar: Grammar = build_start_grammar(oracle, guide_examples, bbl_bounds)
         # oracle.close()
