@@ -77,7 +77,7 @@ class ExternalOracle:
                     with tempfile.NamedTemporaryFile(suffix='.mdl', dir='./Crash/compiletime', delete=False) as fi:
                         fi.write(bytes(string, 'utf-8'))
                         fi.flush()
-                    return True
+                    # return True
                 return False
             try:
                 self.eng.close_system(f_name, nargout = 0)

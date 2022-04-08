@@ -29,7 +29,7 @@ def approx_tokenize(guide_raw:str):
                 return "LETTER"
             if c in "\"":
                 quote = not quote
-                return "LETTER"
+                return None
             if quote==True:
                 return "LETTER"
         if SPLIT_UPPER_AND_LOWER and c in string.ascii_uppercase:
