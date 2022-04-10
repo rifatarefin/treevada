@@ -3,6 +3,7 @@ from lark import Lark
 import tempfile
 import subprocess
 import os
+from datetime import datetime as date
 import matlab.engine
 
 """
@@ -64,14 +65,14 @@ class ExternalOracle:
                 try:
                     self.eng.slreportgen.utils.uncompileModel(model, nargout = 0)
                 except:
-                    print("doesn't uncompile")
+                    print(f"doesn't uncompile {date.now()}".ljust(50), end='\r')
                     with tempfile.NamedTemporaryFile(suffix='.mdl', dir='./Crash', delete=False) as fi:
                         fi.write(bytes(string, 'utf-8'))
                         fi.flush()
                     
-                    return True
+                    return False
             except:
-                print("doesn't compile")
+                print(f"doesn't compile {date.now()}".ljust(50), end='\r')
                 mat = matlab.engine.find_matlab()
                 if len(mat)==0:
                     with tempfile.NamedTemporaryFile(suffix='.mdl', dir='./Crash/compiletime', delete=False) as fi:
@@ -81,28 +82,30 @@ class ExternalOracle:
                 return False
             try:
                 self.eng.close_system(f_name, nargout = 0)
-                print("closed")
+                print(f"closed {date.now()}".ljust(50), end='\r')
             except:
-                print("doesn't close")
+                print(f"doesn't close {date.now()}".ljust(50), end='\r')
 
             
             # FNULL.close()
             return True
         except:
-            print("doesn't load")
+            print(f"doesn't load {date.now()}".ljust(50), end='\r')
             return False
 
         finally:
-            if os.path.exists(f_name):
-                os.remove(f_name)
+            try:
+                if os.path.exists(f_name):
+                    os.remove(f_name)
+            except:
+                pass
+
             mat = matlab.engine.find_matlab()
-            print("Engine")
-            print(mat)
+            print(f"Engine running: {len(mat)}, {date.now}".ljust(80), end='\r')
             if len(mat)==0:
-                print("Before")
                 self.eng = matlab.engine.connect_matlab()
                 self.eng.warning('off','all', nargout = 0)
-                print("Created")
+                print(f"Created new engine {date.now()}".ljust(50), end='\r')
         # except subprocess.CalledProcessError as e:
         #     f.close()
         #     FNULL.close()

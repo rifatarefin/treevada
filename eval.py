@@ -96,6 +96,7 @@ def main(log_file_name, test_examples_folder ):
             for example in tqdm(real_recall_set):
                 try:
                     parser.parse(example)
+                    print(example)
                     print("   ", example, file=f)
                     num_recall_parsed += 1
                 except Exception as e:
