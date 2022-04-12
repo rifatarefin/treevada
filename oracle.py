@@ -1,14 +1,99 @@
+from msilib.schema import Error
+import sys
 import time
 from lark import Lark
 import tempfile
-import subprocess
 import os
+from pebble import concurrent
+from concurrent.futures import TimeoutError
 from datetime import datetime as date
 import matlab.engine
+
 
 """
 This file gives  classes to use as "Oracles" in the Arvada algorithm.
 """
+eng = matlab.engine.connect_matlab()
+eng.warning('off','all', nargout = 0)
+
+def save_file(string, dir):
+    """
+    Save a file to the given directory.
+    """
+    with tempfile.NamedTemporaryFile(suffix='.mdl', dir=dir, delete=False) as fi:
+        fi.write(bytes(string, 'utf-8'))
+        fi.flush()
+        return fi.name
+
+@concurrent.process(timeout=10)
+def parse_internal( string):
+    """
+    Does the work of calling the subprocess.
+    """
+    global eng
+    # FNULL = open(os.devnull, 'w')
+    f_name = save_file(string, 'Tmp/')
+    
+    # case 1: compiles and uncompiles fine
+    # case 2: doesn't uncompile
+    # case 3: doesn't compile
+    try:
+        # With check = True, throws a CalledProcessError if the exit code is non-zero
+        # subprocess.run([self.command, f_name], stdout=FNULL, stderr=FNULL, timeout=timeout, check=True)
+        eng.load_system(f_name)
+        model = eng.bdroot()
+
+        try:
+            eng.slreportgen.utils.compileModel(model, nargout = 0)
+            # print(f"compiled {f_name}: {date.now()}".ljust(80), end='')
+            try:
+                eng.slreportgen.utils.uncompileModel(model, nargout = 0)
+            except:
+                print(f"doesn't uncompile {date.now()}".ljust(50), end='\r')
+                save_file(string, './Crash/uncompile')
+                
+                return False
+        except:
+            print(f"doesn't compile {date.now()}".ljust(50), end='\r')
+            mat = matlab.engine.find_matlab()
+            if len(mat)==0:
+                save_file(string, './Crash/compiletime')
+                
+            return False
+        try:
+            eng.close_system(f_name, nargout = 0)
+            print(f"closed {date.now()}".ljust(50), end='\r')
+        except:
+            print(f"doesn't close {date.now()}".ljust(50), end='\r')
+            save_file(string, './Crash/close')
+            return False
+
+        print(f"compile and close {date.now()}".ljust(50), end='\r')
+        # FNULL.close()
+        return True
+    except Exception as e:
+        print(f"doesn't load {date.now()}".ljust(50), end='\r')
+        # print(e)
+        return False
+
+    finally:
+        try:
+            if os.path.exists(f_name):
+                os.remove(f_name)
+        except:
+            pass
+
+        
+        
+    # except subprocess.CalledProcessError as e:
+    #     f.close()
+    #     FNULL.close()
+    #     return False
+    # except subprocess.TimeoutExpired as e:
+    #     print(f"Caused timeout: {string}")
+    #     f.close()
+    #     FNULL.close()
+    #     return True
 
 class ParseException(Exception):
     pass
@@ -27,8 +112,7 @@ class ExternalOracle:
         in the oracle call:
             $ readpng <MY_FILE>
         """
-        self.eng = matlab.engine.connect_matlab()
-        self.eng.warning('off','all', nargout = 0)
+        
         # self.command = command
         self.cache_set = {}
         self.parse_calls = 0
@@ -36,86 +120,10 @@ class ExternalOracle:
         self.time_spent = 0
     
     def close(self):
-        self.eng.quit()
+        eng.quit()
 
-    def _parse_internal(self, string, timeout = 3):
-        """
-        Does the work of calling the subprocess.
-        """
-        self.real_calls +=1
-        # FNULL = open(os.devnull, 'w')
-        f = tempfile.NamedTemporaryFile(suffix='.mdl', dir='./Tmp', delete=False)
-        f.write(bytes(string, 'utf-8'))
-        f_name = f.name
-        f.flush()
-        f.close()
-        # x = open(f.name).read()
+   
         
-        # case 1: compiles and uncompiles fine
-        # case 2: doesn't uncompile
-        # case 3: doesn't compile
-        try:
-            # With check = True, throws a CalledProcessError if the exit code is non-zero
-            # subprocess.run([self.command, f_name], stdout=FNULL, stderr=FNULL, timeout=timeout, check=True)
-            self.eng.load_system(f_name)
-            model = self.eng.bdroot()
-
-            try:
-                self.eng.slreportgen.utils.compileModel(model, nargout = 0)
-                try:
-                    self.eng.slreportgen.utils.uncompileModel(model, nargout = 0)
-                except:
-                    print(f"doesn't uncompile {date.now()}".ljust(50), end='\r')
-                    with tempfile.NamedTemporaryFile(suffix='.mdl', dir='./Crash', delete=False) as fi:
-                        fi.write(bytes(string, 'utf-8'))
-                        fi.flush()
-                    
-                    return False
-            except:
-                print(f"doesn't compile {date.now()}".ljust(50), end='\r')
-                mat = matlab.engine.find_matlab()
-                if len(mat)==0:
-                    with tempfile.NamedTemporaryFile(suffix='.mdl', dir='./Crash/compiletime', delete=False) as fi:
-                        fi.write(bytes(string, 'utf-8'))
-                        fi.flush()
-                    # return True
-                return False
-            try:
-                self.eng.close_system(f_name, nargout = 0)
-                print(f"closed {date.now()}".ljust(50), end='\r')
-            except:
-                print(f"doesn't close {date.now()}".ljust(50), end='\r')
-
-            
-            # FNULL.close()
-            return True
-        except:
-            print(f"doesn't load {date.now()}".ljust(50), end='\r')
-            return False
-
-        finally:
-            try:
-                if os.path.exists(f_name):
-                    os.remove(f_name)
-            except:
-                pass
-
-            mat = matlab.engine.find_matlab()
-            print(f"Engine running: {len(mat)}, {date.now}".ljust(80), end='\r')
-            if len(mat)==0:
-                self.eng = matlab.engine.connect_matlab()
-                self.eng.warning('off','all', nargout = 0)
-                print(f"Created new engine {date.now()}".ljust(50), end='\r')
-        # except subprocess.CalledProcessError as e:
-        #     f.close()
-        #     FNULL.close()
-        #     return False
-        # except subprocess.TimeoutExpired as e:
-        #     print(f"Caused timeout: {string}")
-        #     f.close()
-        #     FNULL.close()
-        #     return True
-
     def parse(self, string, timeout=3):
         """
         Caching wrapper around _parse_internal
@@ -127,8 +135,27 @@ class ExternalOracle:
             else:
                 raise ParseException(f"doesn't parse: {string}")
         else:
+            self.real_calls +=1
+            mat = matlab.engine.find_matlab()
+        
+            if len(mat)==0:
+                global eng
+                eng = matlab.engine.connect_matlab()
+                eng.warning('off','all', nargout = 0)
+                print(f"Created new engine {date.now()}".ljust(50), end='\r')
             s = time.time()
-            res = self._parse_internal(string, timeout)
+            future = parse_internal(string)
+            try:
+                res = future.result()
+            except TimeoutError:
+                res = False
+                save_file(string, './Crash/timeout')
+            except Exception as e:
+                print(e)
+                res = False
+                save_file(string, './Crash/exception')
+            
+            # self._parse_internal(string, res)
             self.time_spent += time.time() - s
             self.cache_set[string] = res
             if res:

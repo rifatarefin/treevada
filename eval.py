@@ -68,13 +68,14 @@ def main(log_file_name, test_examples_folder ):
             print(learned_grammar, file=f)
             exit()
 
-        precision_set = learned_grammar.sample_positives(PRECISION_SIZE, 5)
+        precision_set = learned_grammar.sample_positives(PRECISION_SIZE, 10)
         parser: Lark = learned_grammar.parser()
 
         example_gen_time = time.time()
         num_precision_parsed = 0
 
         print(f"Precision set (size {len(precision_set)}):", file=f)
+        print(f"Precision set (size {len(precision_set)}):")
         print("Eval of precision:")
         for i, example in enumerate(tqdm(precision_set)):
             file_nm = "fuzz/model" + str(i) +".mdl"
@@ -92,15 +93,17 @@ def main(log_file_name, test_examples_folder ):
 
         if real_recall_set is not None:
             print(f"Recall set (size {len(real_recall_set)}):", file=f)
+            print(f"Recall set (size {len(real_recall_set)}):")
             print("Recall eval:")
             for example in tqdm(real_recall_set):
                 try:
-                    parser.parse(example)
+                    parser.parse(text=example, start=START)
                     print(example)
                     print("   ", example, file=f)
                     num_recall_parsed += 1
                 except Exception as e:
                     print("   ", example, " <----- FAILURE", file=f)
+                    print("   ", example, " <----- FAILURE")
                     continue
 
             print(

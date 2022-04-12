@@ -1,43 +1,50 @@
+from cgitb import reset
 from os import error
 import matlab.engine
-eng = matlab.engine.connect_matlab()
+import multiprocessing
+from pebble import concurrent
+from concurrent.futures import TimeoutError
 # eng.warning('off','all', nargout = 0)
-
-try:
-    
-    eng.load_system('sample.mdl')
-    print("load")
-    model = eng.bdroot()
+@concurrent.process(timeout=10)
+def oracle():
     try:
-        eng.slreportgen.utils.compileModel(model, nargout = 0)
-        print("compile")
+        
+        eng = matlab.engine.connect_matlab()
+        eng.load_system('sample.mdl')
+        print("load")
+        model = eng.bdroot()
         try:
-            eng.slreportgen.utils.uncompileModel(model, nargout = 0)
-            print("uncomp")
+            eng.slreportgen.utils.compileModel(model, nargout = 0)
+            print("compile")
+            try:
+                eng.slreportgen.utils.uncompileModel(model, nargout = 0)
+                print("uncomp")
+            except:
+                print("doesn't uncompile")
         except:
-            print("doesn't uncompile")
+            print("doesn't compile")
+        try:
+            eng.close_system('sample.mdl', nargout = 0)
+            print("close")
+        except:
+            print("doesn't close")
     except:
-        print("doesn't compile")
+        print("doesn't load")
+
+if __name__ == "__main__":
+
+    
+    # comp = eng.sample([],[],[],'compile')
+    # comp = eng.sample([],[],[],'term')
+
+    future = oracle()
     try:
-        eng.close_system('sample.mdl', nargout = 0)
-        print("close")
-    except:
-        print("doesn't close")
-except:
-    print("doesn't load")
-# comp = eng.sample([],[],[],'compile')
-# comp = eng.sample([],[],[],'term')
-print("comp")
-# if comp:
+        reset = future.result()
+    except TimeoutError:
+        print("timeout")
 
-print("True")
-
-print("last")
-
-
-
-mat = matlab.engine.find_matlab()
-print("Engine")
-print(mat)
-eng.quit()
+    mat = matlab.engine.find_matlab()
+    print("Engine")
+    print(mat)
+    # eng.quit()
 
