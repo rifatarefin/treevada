@@ -25,7 +25,7 @@ def save_file(string, dir):
         fi.flush()
         return fi.name
 
-@concurrent.process(timeout=10)
+@concurrent.process(timeout=20)
 def parse_internal( string):
     """
     Does the work of calling the subprocess.
@@ -66,7 +66,7 @@ def parse_internal( string):
         except:
             print(f"doesn't close {date.now()}".ljust(50), end='\r')
             save_file(string, './Crash/close')
-            return False
+            return True
 
         print(f"compile and close {date.now()}".ljust(50), end='\r')
         # FNULL.close()

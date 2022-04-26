@@ -279,6 +279,7 @@ def build_trees(oracle, leaves):
             TIME_GROUPING += time.time() - group_start
             updated, nlg = False, len(all_groupings)
             for i, (grouping, the_score) in enumerate(all_groupings):
+                print("\nGroup size: ", MAX_GROUP_LEN)
                 print(('[Group len %d] Bubbling iteration %d (%d/%d)...' % (group_size, count, i + 1, nlg)).ljust(50))
                 ### Perform the bubble
                 if isinstance(grouping, Bubble):

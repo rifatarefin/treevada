@@ -97,8 +97,8 @@ def main(log_file_name, test_examples_folder ):
             print("Recall eval:")
             for example in tqdm(real_recall_set):
                 try:
-                    parser.parse(text=example, start=START)
-                    print(example)
+                    parser.parse(text=example)
+                    print("Parse")
                     print("   ", example, file=f)
                     num_recall_parsed += 1
                 except Exception as e:

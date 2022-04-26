@@ -40,6 +40,8 @@ def approx_tokenize(guide_raw:str):
         #     return "DIGIT"
         if GROUP_PUNCTUATION and c in string.punctuation:
             return "PUNCTUATION"
+        if c in "\n":
+            return None
         if c in string.whitespace:
             return "WHITESPACE"
         else:
@@ -107,6 +109,9 @@ def main(guide_examples_folder,  log_file_name):
         bbl_bounds = (6, 20)                #(6,20)
     else:
         bbl_bounds = (3, 10)
+    max_guide_len = max([len(g) for g in guide_examples])
+    print(f"Average guide length: {average_guide_len//1.5}")
+    bbl_bounds = (6, int(average_guide_len//1.5))
 
     # Create the log file and write positive and negative examples to it
     # Also write the initial starting grammar to the file
