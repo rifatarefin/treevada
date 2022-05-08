@@ -1,5 +1,5 @@
 from msilib.schema import Error
-import sys
+import io
 import time
 from lark import Lark
 import tempfile
@@ -14,7 +14,7 @@ import matlab.engine
 This file gives  classes to use as "Oracles" in the Arvada algorithm.
 """
 eng = matlab.engine.connect_matlab()
-eng.warning('off','all', nargout = 0)
+# eng.warning('off','all', nargout = 0)
 
 def save_file(string, dir):
     """
@@ -40,14 +40,17 @@ def parse_internal( string):
     try:
         # With check = True, throws a CalledProcessError if the exit code is non-zero
         # subprocess.run([self.command, f_name], stdout=FNULL, stderr=FNULL, timeout=timeout, check=True)
-        eng.load_system(f_name)
+        out = io.StringIO()
+        eng.load_system(f_name, stdout=out)
+        if 'Warning' in out.getvalue():
+            raise Exception('Warning')
         model = eng.bdroot()
 
         try:
-            eng.slreportgen.utils.compileModel(model, nargout = 0)
+            eng.slreportgen.utils.compileModel(model, nargout = 0, stdout=out)
             # print(f"compiled {f_name}: {date.now()}".ljust(80), end='')
             try:
-                eng.slreportgen.utils.uncompileModel(model, nargout = 0)
+                eng.slreportgen.utils.uncompileModel(model, nargout = 0, stdout=out)
             except:
                 print(f"doesn't uncompile {date.now()}".ljust(50), end='\r')
                 save_file(string, './Crash/uncompile')
@@ -141,7 +144,7 @@ class ExternalOracle:
             if len(mat)==0:
                 global eng
                 eng = matlab.engine.connect_matlab()
-                eng.warning('off','all', nargout = 0)
+                # eng.warning('off','all', nargout = 0)
                 print(f"Created new engine {date.now()}".ljust(50), end='\r')
             s = time.time()
             future = parse_internal(string)

@@ -1,17 +1,23 @@
 from cgitb import reset
 from os import error
+from sys import stderr, stdout
 import matlab.engine
-import multiprocessing
+import io
 from pebble import concurrent
 from concurrent.futures import TimeoutError
-# eng.warning('off','all', nargout = 0)
-@concurrent.process(timeout=10)
+@concurrent.process(timeout=20)
 def oracle():
     try:
-        
+        err = io.StringIO()
         eng = matlab.engine.connect_matlab()
-        eng.load_system('sample.mdl')
-        print("load")
+        # eng.warning('off','all', nargout = 0)
+        eng.load_system('sample.mdl', stdout=err)
+        x = err.getvalue()
+        print(type(x))
+        if('Warning' in x):
+            raise Exception('Warning')
+        else:
+            print('load')
         model = eng.bdroot()
         try:
             eng.slreportgen.utils.compileModel(model, nargout = 0)

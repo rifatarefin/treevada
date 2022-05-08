@@ -110,8 +110,9 @@ def main(guide_examples_folder,  log_file_name):
     else:
         bbl_bounds = (3, 10)
     max_guide_len = max([len(g) for g in guide_examples])
-    print(f"Average guide length: {average_guide_len//1.5}")
-    bbl_bounds = (6, int(average_guide_len//1.5))
+    print(f"Max guide length: {max_guide_len}")
+    print(f"Average guide length: {average_guide_len}")
+    bbl_bounds = (6, int(average_guide_len))
 
     # Create the log file and write positive and negative examples to it
     # Also write the initial starting grammar to the file
