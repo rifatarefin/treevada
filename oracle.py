@@ -8,6 +8,7 @@ from pebble import concurrent
 from concurrent.futures import TimeoutError
 from datetime import datetime as date
 import matlab.engine
+import csv
 
 
 """
@@ -24,7 +25,8 @@ def save_file(string, dir):
         fi.write(bytes(string, 'utf-8'))
         fi.flush()
         return fi.name
-
+load = set()
+compile = set()
 @concurrent.process(timeout=20)
 def parse_internal( string):
     """
@@ -42,12 +44,27 @@ def parse_internal( string):
         # subprocess.run([self.command, f_name], stdout=FNULL, stderr=FNULL, timeout=timeout, check=True)
         out = io.StringIO()
         eng.load_system(f_name, stdout=out)
-        if 'Warning' in out.getvalue():
+        x = out.getvalue()
+        # check warning message
+        # if x != '' and x not in load:
+        #     load.add(x)
+        #     with open('load_warnings.csv', 'a') as f:
+        #         writer = csv.writer(f)
+        #         writer.writerow([x, string])
+        if 'expected' in x:
             raise Exception('Warning')
         model = eng.bdroot()
 
         try:
             eng.slreportgen.utils.compileModel(model, nargout = 0, stdout=out)
+            x = out.getvalue()
+            if "Unconnected" in x:
+                raise Exception('Warning')
+            # if x != '' and x not in compile:
+            #     compile.add(x)
+            #     with open('compile_warnings.csv', 'a') as f:
+            #         writer = csv.writer(f)
+            #         writer.writerow([x, string])
             # print(f"compiled {f_name}: {date.now()}".ljust(80), end='')
             try:
                 eng.slreportgen.utils.uncompileModel(model, nargout = 0, stdout=out)

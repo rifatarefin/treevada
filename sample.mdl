@@ -2,9 +2,19 @@ Model {
 Name toy
 System {
 Name toy
- {
-BlockType Bias
-Name "cfblk1" SID "5"
+Block {
+BlockType DiscreteTransferFcn
+Name "cfblk1"
+}
+Block {
+BlockType Display
+Name "cfblk3"
+}
+Line {
+SrcBlock "cfblk1"
+SrcPort 1
+DstBlock "cfblk3"
+DstPort 1
 }
 
 }
