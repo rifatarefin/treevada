@@ -24,7 +24,7 @@ quote = False
 def approx_tokenize(guide_raw:str):
     def get_category(c):
         global quote
-        if not SPLIT_UPPER_AND_LOWER:                                                       #everything in quote should be grouped
+        if not SPLIT_UPPER_AND_LOWER:                                   #everything in quote should be grouped
             if c in string.ascii_letters or c in string.digits:
                 return "LETTER"
             if c in "\"":
@@ -98,21 +98,21 @@ def main(guide_examples_folder,  log_file_name):
         guide_raw = open(full_filename).read()
         if USE_PRETOKENIZATION:
             guide = approx_tokenize(guide_raw)
-            for i in guide:
-                print(i.payload)
+            # for i in guide:
+            #     print(i.payload)
         else:
             guide = [ParseNode(c, True, []) for c in guide_raw]
         guide_examples.append(guide)
 
     average_guide_len = sum([len(g) for g in guide_examples])/len(guide_examples)
     if average_guide_len > 40:
-        bbl_bounds = (6, 20)                #(6,20)
+        bbl_bounds = (2, 20)                #(6,20)
     else:
-        bbl_bounds = (3, 10)
+        bbl_bounds = (2, 10)
     max_guide_len = max([len(g) for g in guide_examples])
     print(f"Max guide length: {max_guide_len}")
     print(f"Average guide length: {average_guide_len}")
-    bbl_bounds = (6, int(average_guide_len))
+    # bbl_bounds = (2, int(average_guide_len))
 
     # Create the log file and write positive and negative examples to it
     # Also write the initial starting grammar to the file

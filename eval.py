@@ -68,7 +68,7 @@ def main(log_file_name, test_examples_folder ):
             print(learned_grammar, file=f)
             exit()
 
-        precision_set = learned_grammar.sample_positives(PRECISION_SIZE, 10)
+        precision_set = learned_grammar.sample_positives(PRECISION_SIZE, 5)
         parser: Lark = learned_grammar.parser()
 
         example_gen_time = time.time()

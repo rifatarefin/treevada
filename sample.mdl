@@ -14,7 +14,7 @@ Line {
 SrcBlock "cfblk1"
 SrcPort 1
 DstBlock "cfblk3"
-DstPort 1
+DstPort 2
 }
 
 }
