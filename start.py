@@ -2,6 +2,7 @@ import time
 from collections import defaultdict
 from typing import List, Tuple, Set, Dict, Optional, Union
 from unittest import result
+from cv2 import threshold
 
 from traitlets import Bool
 
@@ -123,7 +124,14 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]]):
 
     def braces_tree(leaves: List[ParseNode], index: int, root: bool = False):
         """ 
-        returns a dictionary (key -> value = opening brace -> closing brace)
+        returns a initial parse tree based on brackets.
+        input: a { b c}
+        parse tree: 
+             START
+            / | | \
+           a  { t1 }
+                /\
+                b c
         """
         
         children = []
@@ -135,12 +143,12 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]]):
             node = leaves[index]
             token = node.payload
             if token == "{":
-
-                child, index = braces_tree(leaves, index)
-                children.append(child)
-            elif token == "}":
                 children.append(ParseNode(get_class[token], False, [node]))
-                return ParseNode(allocate_tid(), False, children), index
+                child, index = braces_tree(leaves, index+1)
+                children.extend(child)
+            elif token == "}":
+                # children.append(ParseNode(get_class[token], False, [node]))
+                return (ParseNode(allocate_tid(), False, children), ParseNode(get_class[token], False, [node])), index
             else:
                 children.append(ParseNode(get_class[token], False, [node]))
             index+=1
@@ -314,9 +322,12 @@ def build_trees(oracle, leaves):
     s = time.time()
     # Main algorithm loop. Iteratively increase the length of groups allowed from MIN_GROUP_LEN to MAX_GROUP_LEN
     print("Group size: ", MAX_GROUP_LEN)
+    # break the group_size loop if no valid merge after increasing group size by threshold
+    threshold = 6
     for group_size in range(MIN_GROUP_LEN, MAX_GROUP_LEN):
         count = 1
         updated = True
+        
         while updated:
             group_start = time.time()
             all_groupings = group(best_trees, group_size)
@@ -346,11 +357,12 @@ def build_trees(oracle, leaves):
                     print(grouping_str)
                     best_trees = new_trees
                     updated = True
+                    threshold = 6
                     break
-
+            threshold -= 1
             count = count + 1
 
-        if group_size > max_example_size:
+        if group_size > max_example_size or threshold == 0:
             break
 
     BUILD_TIME += time.time() - s
