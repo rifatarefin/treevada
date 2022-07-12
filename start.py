@@ -357,7 +357,7 @@ def build_trees(oracle, leaves):
                     print(grouping_str)
                     best_trees = new_trees
                     updated = True
-                    threshold = 6
+                    threshold = group_size*2
                     break
             threshold -= 1
             count = count + 1

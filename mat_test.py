@@ -1,4 +1,5 @@
 from cgitb import reset
+from operator import le, length_hint
 from os import error
 from sys import stderr, stdout
 import matlab.engine
@@ -65,53 +66,24 @@ if __name__ == "__main__":
     print(warnings)
     # eng.quit()
 
-import re
-
-class ParseError(Exception):
-    pass
-
-# Tokenize a string.
-# Tokens yielded are of the form (type, string)
-# Possible values for 'type' are '(', ')' and 'WORD'
-def tokenize(s):
-    toks = re.compile(' +|[A-Za-z]+|[()]')
-    for match in toks.finditer(s):
-        s = match.group(0)
-        if s[0] == ' ':
-            continue
-        if s[0] in '()':
-            yield (s, s)
+nums = [9,1,4,7,3,-1,0,5,8,-1,6]
+import collections
+occ = collections.defaultdict(int)
+for i in nums:
+    occ[i] =1
+res=streak=min(1, len(nums))
+start = True
+for i in list(occ.keys()):
+    
+    if occ[(i-1)]==1: 
+        if start == True:
+            streak = 2
+            start = False
         else:
-            yield ('WORD', s)
-
-
-# Parse once we're inside an opening bracket.
-def parse_inner(toks):
-    ty, name = next(toks)
-    if ty != 'WORD': raise ParseError
-    children = []
-    while True:
-        ty, s = next(toks)
-        if ty == '(':
-            children.append(parse_inner(toks))
-        elif ty == ')':
-            return (name, children)
-
-# Parse this grammar:
-# ROOT ::= '(' INNER
-# INNER ::= WORD ROOT* ')'
-# WORD ::= [A-Za-z]+
-def parse_root(toks):
-    ty, _ = next(toks)
-    if ty != '(': raise ParseError
-    return parse_inner(toks)
-
-def show_children(tree):
-    name, children = tree
-    if not children: return
-    print ('%s -> %s' % (name, ' '.join(child[0] for child in children)))
-    for child in children:
-        show_children(child)
-
-example = '( Root ( AB ( ABC ) ( CBA ) ) ( CD ( CDE ) ( FGH ) ) )'
-show_children(parse_root(tokenize(example)))
+            streak += 1 
+        if streak>res:
+            res = streak
+    else:
+        start = False
+    print(i, streak)
+print(res)
