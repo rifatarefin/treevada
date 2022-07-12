@@ -27,94 +27,6 @@ def save_file(string, dir):
         return fi.name
 load = set()
 compile = set()
-@concurrent.process(timeout=20)
-def parse_internal( string):
-    """
-    Does the work of calling the subprocess.
-    """
-    global eng
-    # FNULL = open(os.devnull, 'w')
-    f_name = save_file(string, 'Tmp/')
-    
-    # case 1: compiles and uncompiles fine
-    # case 2: doesn't uncompile
-    # case 3: doesn't compile
-    try:
-        # With check = True, throws a CalledProcessError if the exit code is non-zero
-        # subprocess.run([self.command, f_name], stdout=FNULL, stderr=FNULL, timeout=timeout, check=True)
-        out = io.StringIO()
-        eng.load_system(f_name, stdout=out)
-        x = out.getvalue()
-        # check warning message
-        # if x != '' and x not in load:
-        #     load.add(x)
-        #     with open('load_warnings.csv', 'a') as f:
-        #         writer = csv.writer(f)
-        #         writer.writerow([x, string])
-        if 'expected' in x:
-            raise Exception('Warning')
-        model = eng.bdroot()
-
-        try:
-            eng.slreportgen.utils.compileModel(model, nargout = 0, stdout=out)
-            x = out.getvalue()
-            if "Unconnected" in x:
-                raise Exception('Warning')
-            # if x != '' and x not in compile:
-            #     compile.add(x)
-            #     with open('compile_warnings.csv', 'a') as f:
-            #         writer = csv.writer(f)
-            #         writer.writerow([x, string])
-            # print(f"compiled {f_name}: {date.now()}".ljust(80), end='')
-            try:
-                eng.slreportgen.utils.uncompileModel(model, nargout = 0, stdout=out)
-            except:
-                print(f"doesn't uncompile {date.now()}".ljust(50), end='\r')
-                save_file(string, './Crash/uncompile')
-                
-                return False
-        except:
-            print(f"doesn't compile {date.now()}".ljust(50), end='\r')
-            mat = matlab.engine.find_matlab()
-            if len(mat)==0:
-                save_file(string, './Crash/compiletime')
-                
-            return False
-        try:
-            eng.close_system(f_name, nargout = 0)
-            print(f"closed {date.now()}".ljust(50), end='\r')
-        except:
-            print(f"doesn't close {date.now()}".ljust(50), end='\r')
-            save_file(string, './Crash/close')
-            return True
-
-        print(f"compile and close {date.now()}".ljust(50), end='\r')
-        # FNULL.close()
-        return True
-    except Exception as e:
-        print(f"doesn't load {date.now()}".ljust(50), end='\r')
-        # print(e)
-        return False
-
-    finally:
-        try:
-            if os.path.exists(f_name):
-                os.remove(f_name)
-        except:
-            pass
-
-        
-        
-    # except subprocess.CalledProcessError as e:
-    #     f.close()
-    #     FNULL.close()
-    #     return False
-    # except subprocess.TimeoutExpired as e:
-    #     print(f"Caused timeout: {string}")
-    #     f.close()
-    #     FNULL.close()
-    #     return True
-
 class ParseException(Exception):
     pass
 
@@ -142,7 +54,94 @@ class ExternalOracle:
     def close(self):
         eng.quit()
 
-   
+    @concurrent.process(timeout=20)
+    def parse_internal(self, string):
+        """
+        Does the work of calling the subprocess.
+        """
+        global eng
+        # FNULL = open(os.devnull, 'w')
+        self.real_calls +=1
+        f_name = save_file(string, 'Tmp/')
+        
+        # case 1: compiles and uncompiles fine
+        # case 2: doesn't uncompile
+        # case 3: doesn't compile
+        try:
+            # With check = True, throws a CalledProcessError if the exit code is non-zero
+            # subprocess.run([self.command, f_name], stdout=FNULL, stderr=FNULL, timeout=timeout, check=True)
+            out = io.StringIO()
+            eng.load_system(f_name, stdout=out)
+            x = out.getvalue()
+            # check warning message
+            # if x != '' and x not in load:
+            #     load.add(x)
+            #     with open('load_warnings.csv', 'a') as f:
+            #         writer = csv.writer(f)
+            #         writer.writerow([x, string])
+            if 'expected' in x:
+                raise Exception('Warning')
+            model = eng.bdroot()
+
+            try:
+                eng.slreportgen.utils.compileModel(model, nargout = 0, stdout=out)
+                x = out.getvalue()
+                if "Unconnected" in x:
+                    raise Exception('Warning')
+                # if x != '' and x not in compile:
+                #     compile.add(x)
+                #     with open('compile_warnings.csv', 'a') as f:
+                #         writer = csv.writer(f)
+                #         writer.writerow([x, string])
+                # print(f"compiled {f_name}: {date.now()}".ljust(80), end='')
+                try:
+                    eng.slreportgen.utils.uncompileModel(model, nargout = 0, stdout=out)
+                except:
+                    print(f"doesn't uncompile {date.now()}".ljust(50), end='\r')
+                    save_file(string, './Crash/uncompile')
+                    
+                    return False
+            except:
+                print(f"doesn't compile {date.now()}".ljust(50), end='\r')
+                mat = matlab.engine.find_matlab()
+                if len(mat)==0:
+                    save_file(string, './Crash/compiletime')
+                    
+                return False
+            try:
+                eng.close_system(f_name, nargout = 0)
+                print(f"closed {date.now()}".ljust(50), end='\r')
+            except:
+                print(f"doesn't close {date.now()}".ljust(50), end='\r')
+                save_file(string, './Crash/close')
+                return True
+
+            print(f"compile and close {date.now()}".ljust(50), end='\r')
+            # FNULL.close()
+            return True
+        except Exception as e:
+            print(f"doesn't load {date.now()}".ljust(50), end='\r')
+            # print(e)
+            return False
+
+        finally:
+            try:
+                if os.path.exists(f_name):
+                    os.remove(f_name)
+            except:
+                pass
+
+            
+            
+        # except subprocess.CalledProcessError as e:
+        #     f.close()
+        #     FNULL.close()
+        #     return False
+        # except subprocess.TimeoutExpired as e:
+        #     print(f"Caused timeout: {string}")
+        #     f.close()
+        #     FNULL.close()
+        #     return True
         
     def parse(self, string, timeout=3):
         """
@@ -164,7 +163,7 @@ class ExternalOracle:
                 # eng.warning('off','all', nargout = 0)
                 print(f"Created new engine {date.now()}".ljust(50), end='\r')
             s = time.time()
-            future = parse_internal(string)
+            future = self.parse_internal(string)
             try:
                 res = future.result()
             except TimeoutError:
