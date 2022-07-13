@@ -5,3 +5,14 @@ venv/*
 *.log
 .idea/*
 external-examples/*
+Crash/*
+curl/
+tinyc/
+nodejs/
+fuzz/
+mdl/
+SLForge/
+Tmp/
+*.gramdict
+*.txt
+*.eval
