@@ -311,6 +311,8 @@ def build_trees(oracle, leaves):
 
     s = time.time()
     # Main algorithm loop. Iteratively increase the length of groups allowed from MIN_GROUP_LEN to MAX_GROUP_LEN
+    # break the group_size loop if no valid merge after increasing group size by threshold
+    threshold = 6
     for group_size in range(MIN_GROUP_LEN, MAX_GROUP_LEN):
         count = 1
         updated = True
@@ -320,7 +322,7 @@ def build_trees(oracle, leaves):
             TIME_GROUPING += time.time() - group_start
             updated, nlg = False, len(all_groupings)
             for i, (grouping, the_score) in enumerate(all_groupings):
-                print(('[Group len %d] Bubbling iteration %d (%d/%d)...' % (group_size, count, i + 1, nlg)).ljust(50), end='\r')
+                print(('[Group len %d] Bubbling iteration %d (%d/%d)...' % (group_size, count, i + 1, nlg)).ljust(50))
                 ### Perform the bubble
                 if isinstance(grouping, Bubble):
                     new_trees = apply(grouping, best_trees)
@@ -342,11 +344,12 @@ def build_trees(oracle, leaves):
                     print(grouping_str)
                     best_trees = new_trees
                     updated = True
+                    threshold = group_size*2
                     break
-
+            threshold -= 1
             count = count + 1
 
-        if group_size > max_example_size:
+        if group_size > max_example_size or threshold == 0:
             break
 
     BUILD_TIME += time.time() - s

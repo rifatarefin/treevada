@@ -14,3 +14,7 @@ Tmp/*
 Crash/*
 SLForge/
 mdl/*
+nodejs/
+tinyc/
+curl/
+*.txt
