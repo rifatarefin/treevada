@@ -17,20 +17,30 @@ See __main__ dispatch at the bottom for usage.
 USE_PRETOKENIZATION = True
 
 GROUP_PUNCTUATION = False
-SPLIT_UPPER_AND_LOWER = True
+SPLIT_UPPER_AND_LOWER = False
 
+quote = False
 def approx_tokenize(guide_raw:str):
     def get_category(c):
-        if not SPLIT_UPPER_AND_LOWER and c in string.ascii_letters:
-            return "LETTER"
+        global quote
+        if not SPLIT_UPPER_AND_LOWER:                                   #everything in quote should be grouped
+            if c in string.ascii_letters or c in string.digits:
+                return "LETTER"
+            if c in "\"":
+                quote = not quote
+                return None
+            if quote==True:
+                return "LETTER"
         if SPLIT_UPPER_AND_LOWER and c in string.ascii_uppercase:
             return "UPPER"
         if SPLIT_UPPER_AND_LOWER and c in string.ascii_lowercase:
             return "LOWER"
-        if c in string.digits:
-            return "DIGIT"
+        # if c in string.digits:
+        #     return "DIGIT"
         if GROUP_PUNCTUATION and c in string.punctuation:
             return "PUNCTUATION"
+        if c in "\n":
+            return None
         if c in string.whitespace:
             return "WHITESPACE"
         else:
@@ -93,7 +103,7 @@ def main(oracle_cmd, guide_examples_folder,  log_file_name):
 
     average_guide_len = sum([len(g) for g in guide_examples])/len(guide_examples)
     if average_guide_len > 40:
-        bbl_bounds = (6, 20)
+        bbl_bounds = (2, 20)
     else:
         bbl_bounds = (3, 10)
 

@@ -91,7 +91,7 @@ def build_start_grammar(oracle, leaves, bbl_bounds = (3,10)):
     print('Coalescing nonterminals...'.ljust(50), end='\r')
     s = time.time()
     grammar, new_trees, coalesce_caused = coalesce(oracle, trees, grammar)
-    grammar, new_trees, partial_coalesces = coalesce_partial(oracle, new_trees, grammar)
+    # grammar, new_trees, partial_coalesces = coalesce_partial(oracle, new_trees, grammar)
     LAST_COALESCE_TIME += time.time() - s
     s = time.time()
     grammar = expand_tokens(oracle, grammar, new_trees)
@@ -111,8 +111,52 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]]):
     """
     terminals = list(set([leaf.payload for leaf_lst in leaves for leaf in leaf_lst]))
     get_class = {t: allocate_tid() for t in terminals}
-    trees = [ParseNode(START, False, [ParseNode(get_class[leaf.payload], False, [leaf]) for leaf in leaf_lst])
-             for leaf_lst in leaves]
+
+    def braces_tree(leaves: List[ParseNode], index: int):
+        """ 
+        returns a initial parse tree based on brackets.
+        input: a { b c}
+        parse tree: 
+             START
+            / | | \
+           a  { t1 }
+                /\
+                b c
+        """
+        
+        children = []
+        # if root == False:
+            
+        #     children.append(ParseNode(get_class[leaves[index].payload], False, [leaves[index]]))
+        #     index+=1
+        while index<len(leaves):
+            node = leaves[index]
+            token = node.payload
+            if token == "{" or token == "(" or token == "[":
+                children.append(ParseNode(get_class[token], False, [node]))
+                child, index = braces_tree(leaves, index+1)
+                children.extend(child)
+            elif token == "}" or token == ")" or token == "]":
+                # children.append(ParseNode(get_class[token], False, [node]))
+                return (ParseNode(allocate_tid(), False, children), ParseNode(get_class[token], False, [node])), index
+            else:
+                children.append(ParseNode(get_class[token], False, [node]))
+            index+=1
+
+        return ParseNode(START, False, children)
+
+    
+    # trees = [ParseNode(START, False, [ParseNode(get_class[leaf.payload], False, [leaf]) for leaf in leaf_lst])
+    #          for leaf_lst in leaves]
+    trees=[]
+    for leaf_list in leaves:
+        new_children = braces_tree(leaf_list, 0)
+        # new_tree = ParseNode(START, False, new_children)
+        trees.append(new_children)
+
+
+    # for i in trees[0].children:
+    #     print(i.payload, len(i.children))
     return trees
 
 
@@ -240,11 +284,11 @@ def build_trees(oracle, leaves):
         grammar = build_grammar(trees)
 
         grammar, new_trees, coalesce_caused = coalesce(oracle, trees, grammar, new_bubble)
-        if not coalesce_caused and not isinstance(new_bubble, tuple):
-            grammar, new_trees, partial_coalesces = coalesce_partial(oracle, trees, grammar, new_bubble)
-            if partial_coalesces:
-                print("\n(partial)")
-                coalesce_caused = True
+        # if not coalesce_caused and not isinstance(new_bubble, tuple):
+        #     grammar, new_trees, partial_coalesces = coalesce_partial(oracle, trees, grammar, new_bubble)
+        #     if partial_coalesces:
+        #         print("\n(partial)")
+        #         coalesce_caused = True
 
         # grammar = minimize(grammar)
         new_size = grammar.size()
@@ -259,7 +303,7 @@ def build_trees(oracle, leaves):
     s = time.time()
     print("Beginning coalescing...".ljust(50))
     grammar, best_trees, _ = coalesce(oracle, best_trees, grammar)
-    grammar, best_trees, _ = coalesce_partial(oracle, best_trees, grammar)
+    # grammar, best_trees, _ = coalesce_partial(oracle, best_trees, grammar)
     ORIGINAL_COALESCE_TIME += time.time() - s
 
 

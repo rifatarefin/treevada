@@ -75,6 +75,7 @@ def main(oracle_cmd, log_file_name, test_examples_folder ):
         num_precision_parsed = 0
 
         print(f"Precision set (size {len(precision_set)}):", file=f)
+        print(f"Precision set (size {len(precision_set)}):")
         print("Eval of precision:")
         for example in tqdm(precision_set):
             try:
@@ -89,6 +90,7 @@ def main(oracle_cmd, log_file_name, test_examples_folder ):
 
         if real_recall_set is not None:
             print(f"Recall set (size {len(real_recall_set)}):", file=f)
+            print(f"Recall set (size {len(real_recall_set)}):")
             print("Recall eval:")
             for example in tqdm(real_recall_set):
                 try:
