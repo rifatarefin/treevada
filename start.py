@@ -142,8 +142,9 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]]):
             else:
                 children.append(ParseNode(get_class[token], False, [node]))
             index+=1
-
-        return ParseNode(START, False, children)
+        final_tree = ParseNode(START, False, children)
+        final_tree.update_cache_info()
+        return final_tree
 
     
     # trees = [ParseNode(START, False, [ParseNode(get_class[leaf.payload], False, [leaf]) for leaf in leaf_lst])
@@ -308,11 +309,11 @@ def build_trees(oracle, leaves):
 
 
     max_example_size = max([len(leaf_lst) for leaf_lst in leaves])
-
+    print(f"max example size {max_example_size}")
     s = time.time()
     # Main algorithm loop. Iteratively increase the length of groups allowed from MIN_GROUP_LEN to MAX_GROUP_LEN
     # break the group_size loop if no valid merge after increasing group size by threshold
-    threshold = 6
+    threshold = 10
     for group_size in range(MIN_GROUP_LEN, MAX_GROUP_LEN):
         count = 1
         updated = True
@@ -344,12 +345,13 @@ def build_trees(oracle, leaves):
                     print(grouping_str)
                     best_trees = new_trees
                     updated = True
-                    threshold = group_size*2
+                    threshold = 10
                     break
-            threshold -= 1
             count = count + 1
+        threshold -= 1
 
         if group_size > max_example_size or threshold == 0:
+            print(f"BREAK, group size {group_size}, threshold {threshold}")
             break
 
     BUILD_TIME += time.time() - s
