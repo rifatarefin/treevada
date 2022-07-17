@@ -1,10 +1,6 @@
 import time
 from collections import defaultdict
 from typing import List, Tuple, Set, Dict, Optional, Union
-from unittest import result
-from cv2 import threshold
-
-from traitlets import Bool
 
 from bubble import Bubble
 from group import group
@@ -122,7 +118,7 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]]):
     terminals = list(set([leaf.payload for leaf_lst in leaves for leaf in leaf_lst]))
     get_class = {t: allocate_tid() for t in terminals}
 
-    def braces_tree(leaves: List[ParseNode], index: int, root: bool = False):
+    def braces_tree(leaves: List[ParseNode], index: int):
         """ 
         returns a initial parse tree based on brackets.
         input: a { b c}
@@ -135,32 +131,33 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]]):
         """
         
         children = []
-        if root == False:
+        # if root == False:
             
-            children.append(ParseNode(get_class[leaves[index].payload], False, [leaves[index]]))
-            index+=1
+        #     children.append(ParseNode(get_class[leaves[index].payload], False, [leaves[index]]))
+        #     index+=1
         while index<len(leaves):
             node = leaves[index]
             token = node.payload
-            if token == "{":
+            if token == "{" or token == "(" or token == "[":
                 children.append(ParseNode(get_class[token], False, [node]))
                 child, index = braces_tree(leaves, index+1)
                 children.extend(child)
-            elif token == "}":
+            elif token == "}" or token == ")" or token == "]":
                 # children.append(ParseNode(get_class[token], False, [node]))
                 return (ParseNode(allocate_tid(), False, children), ParseNode(get_class[token], False, [node])), index
             else:
                 children.append(ParseNode(get_class[token], False, [node]))
             index+=1
-
-        return ParseNode(START, False, children)
+        final_tree = ParseNode(START, False, children)
+        final_tree.update_cache_info()
+        return final_tree
 
     
     # trees = [ParseNode(START, False, [ParseNode(get_class[leaf.payload], False, [leaf]) for leaf in leaf_lst])
     #          for leaf_lst in leaves]
     trees=[]
     for leaf_list in leaves:
-        new_children = braces_tree(leaf_list, 0, True)
+        new_children = braces_tree(leaf_list, 0)
         # new_tree = ParseNode(START, False, new_children)
         trees.append(new_children)
 
@@ -357,10 +354,10 @@ def build_trees(oracle, leaves):
                     print(grouping_str)
                     best_trees = new_trees
                     updated = True
-                    threshold = group_size*2
+                    threshold = 6
                     break
-            threshold -= 1
             count = count + 1
+        threshold -= 1
 
         if group_size > max_example_size or threshold == 0:
             break

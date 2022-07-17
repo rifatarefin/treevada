@@ -1,5 +1,4 @@
 import argparse
-from glob import glob
 import random, sys, os, time
 from input import parse_input
 from parse_tree import ParseTree, ParseNode
