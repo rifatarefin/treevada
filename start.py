@@ -348,6 +348,7 @@ def build_trees(oracle, leaves):
                     threshold = 10
                     break
             count = count + 1
+        print("DECREMENT")
         threshold -= 1
 
         if group_size > max_example_size or threshold == 0:
