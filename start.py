@@ -112,7 +112,7 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]]):
     terminals = list(set([leaf.payload for leaf_lst in leaves for leaf in leaf_lst]))
     get_class = {t: allocate_tid() for t in terminals}
 
-    def braces_tree(leaves: List[ParseNode], index: int):
+    def braces_tree(leaves: List[ParseNode], index: int, root: bool = False):
         """ 
         returns a initial parse tree based on brackets.
         input: a { b c}
@@ -125,33 +125,33 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]]):
         """
         
         children = []
-        # if root == False:
+        if root == False:
             
-        #     children.append(ParseNode(get_class[leaves[index].payload], False, [leaves[index]]))
-        #     index+=1
+            children.append(ParseNode(get_class[leaves[index].payload], False, [leaves[index]]))
+            index+=1
         while index<len(leaves):
             node = leaves[index]
             token = node.payload
-            if token == "{" or token == "(" or token == "[":
+            if token == "{" or token == "[" or token == "(":
+
+                child, index = braces_tree(leaves, index)
+                children.append(child)
+            elif token == "}" or token == "]" or token == ")":
                 children.append(ParseNode(get_class[token], False, [node]))
-                child, index = braces_tree(leaves, index+1)
-                children.extend(child)
-            elif token == "}" or token == ")" or token == "]":
-                # children.append(ParseNode(get_class[token], False, [node]))
-                return (ParseNode(allocate_tid(), False, children), ParseNode(get_class[token], False, [node])), index
+                return ParseNode(allocate_tid(), False, children), index
             else:
                 children.append(ParseNode(get_class[token], False, [node]))
             index+=1
-        final_tree = ParseNode(START, False, children)
-        final_tree.update_cache_info()
-        return final_tree
+
+        return ParseNode(START, False, children)
 
     
     # trees = [ParseNode(START, False, [ParseNode(get_class[leaf.payload], False, [leaf]) for leaf in leaf_lst])
     #          for leaf_lst in leaves]
     trees=[]
     for leaf_list in leaves:
-        new_children = braces_tree(leaf_list, 0)
+        new_children = braces_tree(leaf_list, 0, True)
+        new_children.update_cache_info()
         # new_tree = ParseNode(START, False, new_children)
         trees.append(new_children)
 
@@ -313,7 +313,7 @@ def build_trees(oracle, leaves):
     s = time.time()
     # Main algorithm loop. Iteratively increase the length of groups allowed from MIN_GROUP_LEN to MAX_GROUP_LEN
     # break the group_size loop if no valid merge after increasing group size by threshold
-    threshold = 10
+    threshold = 6
     for group_size in range(MIN_GROUP_LEN, MAX_GROUP_LEN):
         count = 1
         updated = True
@@ -328,7 +328,7 @@ def build_trees(oracle, leaves):
                 if isinstance(grouping, Bubble):
                     new_trees = apply(grouping, best_trees)
                     new_score, new_trees = score(new_trees, grouping)
-                    grouping_str = f"Successful grouping (single): {grouping.bubbled_elems}"#\n    (aka {[e.derived_string() for e in grouping.bubbled_elems]}"
+                    grouping_str = f"Successful grouping (single): {grouping.bubbled_elems}\n    (aka {[e.derived_string() for e in grouping.bubbled_elems]}"
                     grouping_str += f"\n     [score of {the_score}]"
                 else:
                     bubble_one = grouping[0]
@@ -345,7 +345,7 @@ def build_trees(oracle, leaves):
                     print(grouping_str)
                     best_trees = new_trees
                     updated = True
-                    threshold = 10
+                    threshold = 6
                     break
             count = count + 1
         print("DECREMENT")
@@ -753,6 +753,57 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
             new_grammar.add_rule(rule)
         return new_grammar
 
+    # height of the tree for reverse order traversal
+    def get_height(treeNode: ParseNode):
+        if treeNode.is_terminal:
+            return 1
+        max_height = -1
+        for i in treeNode.children:
+            max_height = max(max_height,get_height(i))
+        return max_height + 1
+
+    
+    # prune tree at each non-terminal by reverse order
+    def prune_tree(trees: List[ParseNode]):
+
+        old_tree = None
+        # helper for prune_tree
+        def drop_reversed(parseNode, level, treeIndex):
+            if parseNode.is_terminal or parseNode.children[0].is_terminal:
+                return
+            if level == 1:
+                pruned = parseNode.copy()
+                parseNode.children= [ParseNode("", True, [])]
+                new_str = old_tree.derived_string()
+                try:
+                    oracle.parse(new_str)
+                    trees[treeIndex] = old_tree
+                    if pruned not in trees:
+                        trees.append(pruned)
+                    print("valid:", old_tree.derived_string())
+                except:
+                    print("before", old_tree.derived_string())
+                    parseNode.children = pruned.children
+                    print("after", old_tree.derived_string())
+                    pass
+
+                return
+                
+            for i in parseNode.children:
+                drop_reversed(i, level-1, treeIndex)
+
+        lng = len(trees)
+        for i in range(lng):
+            height = get_height(trees[i])
+            old_tree = trees[i].copy()
+            
+            for h in reversed(range(2, height-1)):
+                drop_reversed(old_tree, h, i)
+        for tree in trees:
+            tree.update_cache_info()
+                
+
+
     # Define helpful data structures
     nonterminals = set(grammar.rules.keys())
     nonterminals.remove("start")
@@ -813,6 +864,10 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
             coalesce_caused = True
 
     trees = tree_list.inner_list
+    # prune tree 
+    if coalesce_caused:
+        prune_tree(trees)
+    # grammar = build_grammar(trees)
     return grammar, trees, coalesce_caused
 
 
