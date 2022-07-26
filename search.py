@@ -95,6 +95,11 @@ def main(oracle_cmd, guide_examples_folder,  log_file_name):
     for filename in os.listdir(guide_examples_folder):
         full_filename = os.path.join(guide_examples_folder, filename)
         guide_raw = open(full_filename).read()
+        try:
+            oracle.parse(guide_raw)
+        except:
+            print("Invalid seed input")
+            exit(1)
         if USE_PRETOKENIZATION:
             guide = approx_tokenize(guide_raw)
         else:

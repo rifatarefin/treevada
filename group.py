@@ -1,3 +1,4 @@
+from lib2to3.pgen2 import token
 import random
 from collections import defaultdict
 from typing import Union, List, Dict, Tuple
@@ -22,6 +23,28 @@ def group(trees, max_group_size, last_applied_bubble = None) -> List[Bubble]:
     # I.e. t2 t3 t4 in t1 -> t2 t3 t4, but not in t1 -> t2 t2 t3 t4
     full_bubbles = defaultdict(int)
 
+    def is_balanced(tokens: str):
+        """
+        helper function to check if a bubble has balanced brackets.
+        """
+        open_list = ["[","{","("]
+        close_list = ["]","}",")"]
+        stack = []
+        for i in tokens:
+            if i in open_list:
+                stack.append(i)
+            elif i in close_list:
+                pos = close_list.index(i)
+                if (stack and open_list[pos] == stack[-1]):
+                    stack.pop()
+                else:
+                    return False
+        if not stack:
+            return True
+        return False
+
+
+
     def add_groups_for_tree(tree: ParseNode, bubbles: Dict[str, Bubble], tree_idx, child_idxs, left_context="START", right_context ="END"):
         """
         Add all groups possible groupings derived from the parse tree `tree` to `groups`.
@@ -34,6 +57,7 @@ def group(trees, max_group_size, last_applied_bubble = None) -> List[Bubble]:
         for i in range(len(children_lst)):
             for j in range(i + 1, min(len(children_lst) + 1, i + max_group_size + 1)):
                 tree_sublist = children_lst[i:j]
+                stream = ''.join([child.derived_string() for child in children_lst])
                 tree_substr = ''.join([t.payload for t in tree_sublist])
                 if i == 0 and j == len(children_lst):
                     # TODO: add direct parent to bubble

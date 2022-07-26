@@ -68,7 +68,7 @@ def main(oracle_cmd, log_file_name, test_examples_folder ):
             print(learned_grammar, file=f)
             exit()
 
-        precision_set = learned_grammar.sample_positives(PRECISION_SIZE, 5)
+        precision_set = learned_grammar.sample_positives(PRECISION_SIZE, 20)
         parser: Lark = learned_grammar.parser()
 
         example_gen_time = time.time()
@@ -80,10 +80,10 @@ def main(oracle_cmd, log_file_name, test_examples_folder ):
         for example in tqdm(precision_set):
             try:
                 oracle.parse(example, timeout=10)
-                print("   ", example, file=f)
+                print("Passed\n", example, file=f)
                 num_precision_parsed += 1
             except Exception as e:
-                print("   ", example, " <----- FAILURE", file=f)
+                print("Failed", example, " <----- FAILURE", file=f)
                 continue
 
         num_recall_parsed = 0

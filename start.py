@@ -4,7 +4,7 @@ from typing import List, Tuple, Set, Dict, Optional, Union
 
 from bubble import Bubble
 from group import group
-from oracle import ParseException
+from oracle import ExternalOracle, ParseException
 from parse_tree import ParseNode, ParseTreeList, build_grammar, START
 from grammar import *
 from token_expansion import expand_tokens
@@ -103,7 +103,7 @@ def build_start_grammar(oracle, leaves, bbl_bounds = (3,10)):
     return grammar
 
 
-def build_naive_parse_trees(leaves: List[List[ParseNode]]):
+def build_naive_parse_trees(leaves: List[List[ParseNode]], oracle: ExternalOracle):
     """
     Builds naive parse trees for each leaf in `leaves`, assigning each unique
     character to its own nonterminal, and uniting them all under the START
@@ -118,10 +118,10 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]]):
         input: a { b c}
         parse tree: 
              START
-            / | | \
-           a  { t1 }
-                /\
-                b c
+             /  \
+            a   t1
+              / /\ \
+              { b c }
         """
         
         children = []
@@ -152,12 +152,18 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]]):
     for leaf_list in leaves:
         new_children = braces_tree(leaf_list, 0, True)
         new_children.update_cache_info()
+        try:
+            
+            oracle.parse(new_children.derived_string())
+
+        except:
+            print("\nInvalid seed input")
+            exit(1)
+
         # new_tree = ParseNode(START, False, new_children)
         trees.append(new_children)
 
 
-    # for i in trees[0].children:
-    #     print(i.payload, len(i.children))
     return trees
 
 
@@ -299,7 +305,7 @@ def build_trees(oracle, leaves):
             return 0, trees
 
 
-    best_trees = build_naive_parse_trees(leaves)
+    best_trees = build_naive_parse_trees(leaves, oracle)
     grammar = build_grammar(best_trees)
     s = time.time()
     print("Beginning coalescing...".ljust(50))
@@ -309,12 +315,13 @@ def build_trees(oracle, leaves):
 
 
     max_example_size = max([len(leaf_lst) for leaf_lst in leaves])
-    print(f"max example size {max_example_size}")
+    max_node_size = max([len(child.children) for tree in best_trees for child in tree.children])
+    print(f"max example size {max_example_size}, node size: {max_node_size}")
     s = time.time()
     # Main algorithm loop. Iteratively increase the length of groups allowed from MIN_GROUP_LEN to MAX_GROUP_LEN
     # break the group_size loop if no valid merge after increasing group size by threshold
     threshold = 6
-    for group_size in range(MIN_GROUP_LEN, MAX_GROUP_LEN):
+    for group_size in reversed(range(MIN_GROUP_LEN, max(9+1, 10))):
         count = 1
         updated = True
         while updated:
@@ -348,8 +355,8 @@ def build_trees(oracle, leaves):
                     threshold = 6
                     break
             count = count + 1
-        print("DECREMENT")
-        threshold -= 1
+        # print("DECREMENT")
+        # threshold -= 1
 
         if group_size > max_example_size or threshold == 0:
             print(f"BREAK, group size {group_size}, threshold {threshold}")
@@ -777,16 +784,20 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
                 new_str = old_tree.derived_string()
                 try:
                     oracle.parse(new_str)
-                    trees[treeIndex] = old_tree
-                    if pruned not in trees:
-                        trees.append(pruned)
+                    trees[treeIndex] = old_tree.copy()
+                    # if pruned not in trees:
+                    trees.append(pruned)
+                    # trees.append(old_tree.copy())
+                    # trees[-1].update_cache_info()
                     print("valid:", old_tree.derived_string())
                 except:
                     print("before", old_tree.derived_string())
                     parseNode.children = pruned.children
                     print("after", old_tree.derived_string())
                     pass
-
+                # parseNode.children = pruned.children
+                
+                # old_tree.update_cache_info()
                 return
                 
             for i in parseNode.children:
@@ -865,8 +876,8 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
 
     trees = tree_list.inner_list
     # prune tree 
-    if coalesce_caused:
-        prune_tree(trees)
+    # if coalesce_caused:
+    #     prune_tree(trees)
     # grammar = build_grammar(trees)
     return grammar, trees, coalesce_caused
 
