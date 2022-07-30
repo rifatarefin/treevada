@@ -35,7 +35,7 @@ def main_internal(external_folder, log_file, random_guides=False):
     bench_name = os.path.basename(external_folder)
     test_folder = os.path.join(external_folder, "test_set")
     parser_command = os.path.join(external_folder, f"parse_{bench_name}")
-
+    
     main(parser_command, log_file, test_folder)
 
 def main(oracle_cmd, log_file_name, test_examples_folder ):
@@ -68,7 +68,7 @@ def main(oracle_cmd, log_file_name, test_examples_folder ):
             print(learned_grammar, file=f)
             exit()
 
-        precision_set = learned_grammar.sample_positives(PRECISION_SIZE, 20)
+        precision_set = learned_grammar.sample_positives(PRECISION_SIZE, 5)
         parser: Lark = learned_grammar.parser()
 
         example_gen_time = time.time()

@@ -17,4 +17,5 @@ mdl/*
 nodejs/
 tinyc/
 curl/
+micro-benchmarks/
 *.txt

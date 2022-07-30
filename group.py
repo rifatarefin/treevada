@@ -55,9 +55,15 @@ def group(trees, max_group_size, last_applied_bubble = None) -> List[Bubble]:
         #     return
 
         for i in range(len(children_lst)):
+            
             for j in range(i + 1, min(len(children_lst) + 1, i + max_group_size + 1)):
                 tree_sublist = children_lst[i:j]
-                stream = ''.join([child.derived_string() for child in children_lst])
+
+                # discard a bubble if it's not bracket balanced
+                stream = ''.join([child.derived_string() for child in tree_sublist])
+                if not is_balanced(stream):
+                    continue
+
                 tree_substr = ''.join([t.payload for t in tree_sublist])
                 if i == 0 and j == len(children_lst):
                     # TODO: add direct parent to bubble

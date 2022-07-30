@@ -95,11 +95,7 @@ def main(oracle_cmd, guide_examples_folder,  log_file_name):
     for filename in os.listdir(guide_examples_folder):
         full_filename = os.path.join(guide_examples_folder, filename)
         guide_raw = open(full_filename).read()
-        try:
-            oracle.parse(guide_raw)
-        except:
-            print("Invalid seed input")
-            exit(1)
+        
         if USE_PRETOKENIZATION:
             guide = approx_tokenize(guide_raw)
         else:
@@ -108,7 +104,7 @@ def main(oracle_cmd, guide_examples_folder,  log_file_name):
 
     average_guide_len = sum([len(g) for g in guide_examples])/len(guide_examples)
     if average_guide_len > 1:
-        bbl_bounds = (2, int(average_guide_len))
+        bbl_bounds = (2, 60)
     else:
         bbl_bounds = (3, 10)
 
