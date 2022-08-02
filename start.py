@@ -356,7 +356,7 @@ def build_trees(oracle, leaves):
                     break
             count = count + 1
         print("DECREMENT")
-        # threshold -= 1
+        threshold -= 1
 
         if group_size > max_example_size or threshold == 0:
             print(f"BREAK, group size {group_size}, threshold {threshold}")
@@ -734,7 +734,8 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
             fix_double_indirection(new_tree)
             new_trees.append(new_tree)
         return new_trees
-
+    # classes = {class_nt: [first, second]}
+    # get_class = {first: class_nt, second: class_nt}
     def get_updated_grammar(classes: Dict[str, List[str]], get_class: Dict[str, str], grammar):
         # Traverse through the grammar, and update each nonterminal to point to
         # its class nonterminal
