@@ -17,30 +17,26 @@ See __main__ dispatch at the bottom for usage.
 USE_PRETOKENIZATION = True
 
 GROUP_PUNCTUATION = False
-SPLIT_UPPER_AND_LOWER = False
-
+SPLIT_UPPER_AND_LOWER = True
 quote = False
 def approx_tokenize(guide_raw:str):
     def get_category(c):
         global quote
-        if not SPLIT_UPPER_AND_LOWER:                                   #everything in quote should be grouped
-            if c in string.ascii_letters or c in string.digits:
-                return "LETTER"
-            if c in "\"":
-                quote = not quote
-                return None
-            if quote==True:
-                return "LETTER"
+        if c == "\"" or c == "\'":
+            quote = not quote
+            return None
+        if quote == True:
+            return "LETTER"
+        if not SPLIT_UPPER_AND_LOWER and c in string.ascii_letters:
+            return "LETTER"
         if SPLIT_UPPER_AND_LOWER and c in string.ascii_uppercase:
             return "UPPER"
         if SPLIT_UPPER_AND_LOWER and c in string.ascii_lowercase:
             return "LOWER"
-        # if c in string.digits:
-        #     return "DIGIT"
+        if c in string.digits:
+            return "DIGIT"
         if GROUP_PUNCTUATION and c in string.punctuation:
             return "PUNCTUATION"
-        if c in "\n":
-            return None
         if c in string.whitespace:
             return "WHITESPACE"
         else:
@@ -95,7 +91,13 @@ def main(oracle_cmd, guide_examples_folder,  log_file_name):
     for filename in os.listdir(guide_examples_folder):
         full_filename = os.path.join(guide_examples_folder, filename)
         guide_raw = open(full_filename).read()
-        
+        # try:
+            
+        #     oracle.parse(guide_raw)
+
+        # except:
+        #     print("\n xxxInvalid seed input")
+        #     exit(1)
         if USE_PRETOKENIZATION:
             guide = approx_tokenize(guide_raw)
         else:
