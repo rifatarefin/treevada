@@ -18,15 +18,19 @@ USE_PRETOKENIZATION = True
 
 GROUP_PUNCTUATION = False
 SPLIT_UPPER_AND_LOWER = True
-quote = False
+quote = []
 def approx_tokenize(guide_raw:str):
     def get_category(c):
-        global quote
-        if c == "\"" or c == "\'":
-            quote = not quote
+        # everything surrounded by quote is grouped
+        if len(quote)==1:
+            if c == quote[0]:
+                quote.pop()
+                return None
+            else:
+                return "LETTER"
+        if c=="\"" or c=="\'":
+            quote.append(c)
             return None
-        if quote == True:
-            return "LETTER"
         if not SPLIT_UPPER_AND_LOWER and c in string.ascii_letters:
             return "LETTER"
         if SPLIT_UPPER_AND_LOWER and c in string.ascii_uppercase:
