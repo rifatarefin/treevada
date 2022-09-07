@@ -88,16 +88,7 @@ def group(trees, max_group_size, last_applied_bubble = None) -> List[Bubble]:
     # Return the set of repeated groupings as an iterable
     return bubbles
 
-
-def score_and_sort_bubbles(bubbles: Dict[str, Bubble]) -> List[Union[Bubble, Tuple[Bubble, Bubble]]]:
-    """
-    Given a set of bubbles, returns a sorted list of (tuples of) bubbles, sorted by a score on how
-    likely the bubble(s) is to increase the size of the grammar.
-    Single bubble --> likely coalesces with existing nonterminal
-    Double bubble --> likely coalesces with each other
-    """
-
-    def is_balanced(tokens: str):
+def is_balanced(tokens: str):
         """
         helper function to check if a bubble has balanced brackets.
         """
@@ -116,6 +107,14 @@ def score_and_sort_bubbles(bubbles: Dict[str, Bubble]) -> List[Union[Bubble, Tup
         if not stack:
             return True
         return False
+        
+def score_and_sort_bubbles(bubbles: Dict[str, Bubble]) -> List[Union[Bubble, Tuple[Bubble, Bubble]]]:
+    """
+    Given a set of bubbles, returns a sorted list of (tuples of) bubbles, sorted by a score on how
+    likely the bubble(s) is to increase the size of the grammar.
+    Single bubble --> likely coalesces with existing nonterminal
+    Double bubble --> likely coalesces with each other
+    """
 
     bubble_lst = list(sorted(list(bubbles.values()), key=lambda x: len(x.bubbled_elems), reverse=True))
     bubble_pairs = []

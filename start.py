@@ -3,7 +3,7 @@ from collections import defaultdict
 from typing import List, Tuple, Set, Dict, Optional, Union
 
 from bubble import Bubble
-from group import group
+from group import group, is_balanced
 from oracle import ExternalOracle, ParseException
 from parse_tree import ParseNode, ParseTreeList, build_grammar, START
 from grammar import *
@@ -150,7 +150,12 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]], oracle: ExternalOracl
     #          for leaf_lst in leaves]
     trees=[]
     for leaf_list in leaves:
-        new_children = braces_tree(leaf_list, 0, True)
+        leaf_str = ''.join([leaf.payload for leaf in leaf_list])
+        if is_balanced(leaf_str):
+            new_children = braces_tree(leaf_list, 0, True)
+        else:
+            new_children = ParseNode(START, False, [ParseNode(get_class[leaf.payload], False, [leaf]) for leaf in leaf_list])
+
         new_children.update_cache_info()
         try:
             

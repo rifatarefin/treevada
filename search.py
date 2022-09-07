@@ -109,6 +109,8 @@ def main(oracle_cmd, guide_examples_folder,  log_file_name):
         guide_examples.append(guide)
 
     average_guide_len = sum([len(g) for g in guide_examples])/len(guide_examples)
+    max_guide_len = max([len(g) for g in guide_examples])
+    print(f"Average guide length: {average_guide_len}, max guide length: {max_guide_len}")
     if average_guide_len > 1:
         bbl_bounds = (2, 60)
     else:
