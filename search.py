@@ -92,29 +92,32 @@ def main(oracle_cmd, guide_examples_folder,  log_file_name):
        print("Using approximate pre-tokenization stage")
 
     guide_examples = []
+    raw_examples = []
     for filename in os.listdir(guide_examples_folder):
         full_filename = os.path.join(guide_examples_folder, filename)
         guide_raw = open(full_filename).read()
-        # try:
+        raw_examples.append(guide_raw)
+        try:
             
-        #     oracle.parse(guide_raw)
+            oracle.parse(guide_raw)
 
-        # except:
-        #     print("\n xxxInvalid seed input")
-        #     exit(1)
+        except:
+            print("\n xxxInvalid seed input")
+            print(full_filename)
+            exit(1)
         if USE_PRETOKENIZATION:
             guide = approx_tokenize(guide_raw)
         else:
             guide = [ParseNode(c, True, []) for c in guide_raw]
         guide_examples.append(guide)
 
-    average_guide_len = sum([len(g) for g in guide_examples])/len(guide_examples)
-    max_guide_len = max([len(g) for g in guide_examples])
+    average_guide_len = sum([len(g) for g in raw_examples])/len(raw_examples)
+    max_guide_len = max([len(g) for g in raw_examples])
     print(f"Average guide length: {average_guide_len}, max guide length: {max_guide_len}")
-    if average_guide_len > 1:
-        bbl_bounds = (2, 60)
-    else:
-        bbl_bounds = (3, 10)
+    bbl_bounds = (3, 60)
+    # if average_guide_len > 1:
+    # else:
+    #     bbl_bounds = (3, 10)
 
     # Create the log file and write positive and negative examples to it
     # Also write the initial starting grammar to the file

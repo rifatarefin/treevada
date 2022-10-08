@@ -19,3 +19,5 @@ tinyc/
 curl/
 micro-benchmarks/
 *.txt
+*.xlsx
+.vscode/*

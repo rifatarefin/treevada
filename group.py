@@ -1,4 +1,5 @@
 from lib2to3.pgen2 import token
+from math import ceil
 import random
 from collections import defaultdict
 from typing import Union, List, Dict, Tuple
@@ -108,6 +109,16 @@ def is_balanced(tokens: str):
             return True
         return False
         
+def partial_shuffle(lst, randomness):
+    """
+    Shuffle only 'randomness' percent of the list
+    """
+    for _ in range(ceil(len(lst) * randomness / (2 * 100))):
+        i = random.randint(0, len(lst) - 1)
+        j = random.randint(0, len(lst) - 1)
+        lst[i], lst[j] = lst[j], lst[i]
+    return lst
+
 def score_and_sort_bubbles(bubbles: Dict[str, Bubble]) -> List[Union[Bubble, Tuple[Bubble, Bubble]]]:
     """
     Given a set of bubbles, returns a sorted list of (tuples of) bubbles, sorted by a score on how
@@ -173,5 +184,5 @@ def score_and_sort_bubbles(bubbles: Dict[str, Bubble]) -> List[Union[Bubble, Tup
     bubbles = list(bubbles.items())
     if len(bubbles) > 100:
         bubbles = bubbles[:100]
-    random.shuffle(bubbles)
-    return bubbles
+    # random.shuffle(bubbles)
+    return partial_shuffle(bubbles, 50)

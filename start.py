@@ -154,6 +154,7 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]], oracle: ExternalOracl
         if is_balanced(leaf_str):
             new_children = braces_tree(leaf_list, 0, True)
         else:
+            print("Flat tree")
             new_children = ParseNode(START, False, [ParseNode(get_class[leaf.payload], False, [leaf]) for leaf in leaf_list])
 
         new_children.update_cache_info()
@@ -296,11 +297,11 @@ def build_trees(oracle, leaves):
         grammar = build_grammar(trees)
 
         grammar, new_trees, coalesce_caused = coalesce(oracle, trees, grammar, new_bubble)
-        # if not coalesce_caused and not isinstance(new_bubble, tuple):
-        #     grammar, new_trees, partial_coalesces = coalesce_partial(oracle, trees, grammar, new_bubble)
-        #     if partial_coalesces:
-        #         print("\n(partial)")
-        #         coalesce_caused = True
+        if not coalesce_caused and not isinstance(new_bubble, tuple):
+            grammar, new_trees, partial_coalesces = coalesce_partial(oracle, trees, grammar, new_bubble)
+            if partial_coalesces:
+                print("\n(partial)")
+                coalesce_caused = True
 
         # grammar = minimize(grammar)
         new_size = grammar.size()
@@ -315,7 +316,7 @@ def build_trees(oracle, leaves):
     s = time.time()
     print("Beginning coalescing...".ljust(50))
     grammar, best_trees, _ = coalesce(oracle, best_trees, grammar)
-    # grammar, best_trees, _ = coalesce_partial(oracle, best_trees, grammar)
+    grammar, best_trees, _ = coalesce_partial(oracle, best_trees, grammar)
     ORIGINAL_COALESCE_TIME += time.time() - s
 
 
