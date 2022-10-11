@@ -14,7 +14,7 @@ High-level command line to launch Arvada search.
 See __main__ dispatch at the bottom for usage. 
 """
 
-USE_PRETOKENIZATION = False
+USE_PRETOKENIZATION = True
 
 GROUP_PUNCTUATION = False
 SPLIT_UPPER_AND_LOWER = True
