@@ -297,11 +297,11 @@ def build_trees(oracle, leaves):
         grammar = build_grammar(trees)
 
         grammar, new_trees, coalesce_caused = coalesce(oracle, trees, grammar, new_bubble)
-        if not coalesce_caused and not isinstance(new_bubble, tuple):
-            grammar, new_trees, partial_coalesces = coalesce_partial(oracle, trees, grammar, new_bubble)
-            if partial_coalesces:
-                print("\n(partial)")
-                coalesce_caused = True
+        # if not coalesce_caused and not isinstance(new_bubble, tuple):
+        #     grammar, new_trees, partial_coalesces = coalesce_partial(oracle, trees, grammar, new_bubble)
+        #     if partial_coalesces:
+        #         print("\n(partial)")
+        #         coalesce_caused = True
 
         # grammar = minimize(grammar)
         new_size = grammar.size()
@@ -316,7 +316,7 @@ def build_trees(oracle, leaves):
     s = time.time()
     print("Beginning coalescing...".ljust(50))
     grammar, best_trees, _ = coalesce(oracle, best_trees, grammar)
-    grammar, best_trees, _ = coalesce_partial(oracle, best_trees, grammar)
+    # grammar, best_trees, _ = coalesce_partial(oracle, best_trees, grammar)
     ORIGINAL_COALESCE_TIME += time.time() - s
 
 
@@ -562,9 +562,12 @@ def coalesce_partial(oracle, trees: List[ParseNode], grammar: Grammar,
 
     # List of nonterminals that can be partially replaced (find the positions
     # at which other replaces this one)
-    partially_replaceable = [nonterm for nonterm in nonterminals
-                             if len(grammar.rules[nonterm].bodies) == 1 and len(grammar.rules[nonterm].bodies[0]) == 1
-                             and grammar.rules[nonterm].bodies[0][0] not in nonterminals]
+    # partially_replaceable = [nonterm for nonterm in nonterminals
+    #                          if len(grammar.rules[nonterm].bodies) == 1 and len(grammar.rules[nonterm].bodies[0]) == 1
+    #                          and grammar.rules[nonterm].bodies[0][0] not in nonterminals]
+    # partially_replaceable = [nonterm for nonterm in nonterminals
+    #                          if len(grammar.rules[nonterm].bodies) == 1
+    #                          and grammar.rules[nonterm].bodies[0] not in nonterminals]
 
     # The main work of the function.
     replacement_happened = False
