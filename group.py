@@ -182,8 +182,8 @@ def score_and_sort_bubbles(bubbles: Dict[str, Bubble]) -> List[Union[Bubble, Tup
         else:
             bubbles[pair] = score
     bubbles = list(bubbles.items())
-    if len(bubbles) > 100:
-        bubbles = bubbles[:100]
-    random.shuffle(bubbles)
+    if len(bubbles) > 200:
+        bubbles = bubbles[:200]
+    # random.shuffle(bubbles)
     return bubbles
     # return partial_shuffle(bubbles, 50)
