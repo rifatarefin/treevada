@@ -11,6 +11,26 @@ from parse_tree import ParseNode
 last_bubble_lst = None
 last_bubble_pairs = None
 
+def is_balanced(tokens: str):
+        """
+        helper function to check if a bubble has balanced brackets.
+        """
+        open_list = ["[","{","("]
+        close_list = ["]","}",")"]
+        stack = []
+        for i in tokens:
+            if i in open_list:
+                stack.append(i)
+            elif i in close_list:
+                pos = close_list.index(i)
+                if (stack and open_list[pos] == stack[-1]):
+                    stack.pop()
+                else:
+                    return False
+        if not stack:
+            return True
+        return False
+
 def group(trees, max_group_size, last_applied_bubble = None) -> List[Bubble]:
     """
     TREES is a set of ParseNodes.
@@ -39,10 +59,10 @@ def group(trees, max_group_size, last_applied_bubble = None) -> List[Bubble]:
             for j in range(i + 1, min(len(children_lst) + 1, i + max_group_size + 1)):
                 tree_sublist = children_lst[i:j]
 
-                # # discard a bubble if it's not bracket balanced
-                # stream = ''.join([child.derived_string() for child in tree_sublist])
-                # if not is_balanced(stream):
-                #     continue
+                # discard a bubble if it's not bracket balanced
+                stream = ''.join([child.derived_string() for child in tree_sublist])
+                if not is_balanced(stream):
+                    continue
 
                 tree_substr = ''.join([t.payload for t in tree_sublist])
                 if i == 0 and j == len(children_lst):
@@ -89,25 +109,6 @@ def group(trees, max_group_size, last_applied_bubble = None) -> List[Bubble]:
     # Return the set of repeated groupings as an iterable
     return bubbles
 
-def is_balanced(tokens: str):
-        """
-        helper function to check if a bubble has balanced brackets.
-        """
-        open_list = ["[","{","("]
-        close_list = ["]","}",")"]
-        stack = []
-        for i in tokens:
-            if i in open_list:
-                stack.append(i)
-            elif i in close_list:
-                pos = close_list.index(i)
-                if (stack and open_list[pos] == stack[-1]):
-                    stack.pop()
-                else:
-                    return False
-        if not stack:
-            return True
-        return False
         
 def partial_shuffle(lst, randomness):
     """
@@ -151,22 +152,22 @@ def score_and_sort_bubbles(bubbles: Dict[str, Bubble]) -> List[Union[Bubble, Tup
                 commonness = sum([v for v in first_bubble.contexts.values()]) / 2 + sum(
                     [v for v in second_bubble.contexts.values()]) / 2
 
-            first_str = ''.join([child.derived_string() for child in first_bubble.bubbled_elems])
-            second_str = ''.join([child.derived_string() for child in second_bubble.bubbled_elems])
-            if is_balanced(first_str) and is_balanced(second_str):
-                bracketed = 2
-            elif not (is_balanced(first_str) or is_balanced(second_str)):
-                bracketed =1
-            else:
-                bracketed = 0
-
+            # first_str = ''.join([child.derived_string() for child in first_bubble.bubbled_elems])
+            # second_str = ''.join([child.derived_string() for child in second_bubble.bubbled_elems])
+            # if not is_balanced(first_str) or not is_balanced(second_str):
+            #     continue
+            # elif not (is_balanced(first_str) or is_balanced(second_str)):
+            #     bracketed =1
+            # else:
+            #     # bracketed = 0
+            bubble_len = 0 - max(len(first_bubble.bubbled_elems), len(second_bubble.bubbled_elems))
             # If they're partially overlapping, we may need a particular application order.
             if first_prevents_second:
                 # need to invert the order of these, so we try all bubbles...
-                bubble_pairs.append(((bracketed, similarity, commonness), (second_bubble, first_bubble)))
+                bubble_pairs.append(((similarity, commonness, bubble_len), (second_bubble, first_bubble)))
             else:
                 # either they don't conflict, or we can still do second after we apply first
-                bubble_pairs.append(((bracketed, similarity, commonness), (first_bubble, second_bubble)))
+                bubble_pairs.append(((similarity, commonness, bubble_len), (first_bubble, second_bubble)))
 
     bubbles = {}
     # Sort primarily by similarity, secondarily by commonness
@@ -174,16 +175,16 @@ def score_and_sort_bubbles(bubbles: Dict[str, Bubble]) -> List[Union[Bubble, Tup
         # Turn bubbles that are paired w/ a nonterm into single bubbles
         if len(pair[0].bubbled_elems) == 1:
             # This if statement probably never happens...
-            if pair[1] not in bubbles:
+            if pair[1] not in bubbles and len(pair[1].bubbled_elems) > 2:
                 bubbles[pair[1]] = score
         elif len(pair[1].bubbled_elems) == 1:
-            if pair[0] not in bubbles:
+            if pair[0] not in bubbles and len(pair[0].bubbled_elems) > 2:
                 bubbles[pair[0]] = score
-        else:
+        elif len(pair[0].bubbled_elems) > 2 and len(pair[1].bubbled_elems) > 2:
             bubbles[pair] = score
     bubbles = list(bubbles.items())
-    if len(bubbles) > 200:
-        bubbles = bubbles[:200]
-    # random.shuffle(bubbles)
+    if len(bubbles) > 100:
+        bubbles = bubbles[:100]
+    random.shuffle(bubbles)
     return bubbles
     # return partial_shuffle(bubbles, 50)

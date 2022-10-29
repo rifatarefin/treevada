@@ -206,7 +206,7 @@ def apply(grouping: Bubble, trees: List[ParseNode]):
     Returns a new list of trees consisting of  bubbling up the grouping
     in `grouping` for each tree in `trees`
     """
-
+    new_nt = allocate_tid()
     def matches(group_lst, layer):
         """
         GROUP_LST is a contiguous subarray of ParseNodes that are grouped together.
@@ -247,8 +247,8 @@ def apply(grouping: Bubble, trees: List[ParseNode]):
 
         ind = matches(group_lst, new_tree.children)
         while ind != -1:
-            if not len(new_tree.children) == ng:
-                parent = ParseNode(id, False, new_tree.children[ind: ind + ng])
+            if not new_tree.payload == id:
+                parent = ParseNode(new_nt, False, new_tree.children[ind: ind + ng])
                 new_tree.children[ind: ind + ng] = [parent]
                 ind = matches(group_lst, new_tree.children)
             else:
@@ -257,7 +257,7 @@ def apply(grouping: Bubble, trees: List[ParseNode]):
         new_tree.update_cache_info()
         return new_tree
 
-    return [apply_single(tree) for tree in trees]
+    return [apply_single(tree) for tree in trees], new_nt
 
 
 def build_trees(oracle, leaves):
@@ -329,33 +329,33 @@ def build_trees(oracle, leaves):
     s = time.time()
     # Main algorithm loop. Iteratively increase the length of groups allowed from MIN_GROUP_LEN to MAX_GROUP_LEN
     # break the group_size loop if no valid merge after increasing group size by threshold
-    threshold = 5
+    threshold = 7
     for group_size in range(MIN_GROUP_LEN, MAX_GROUP_LEN):
         count = 1
         updated = True
         while updated:
             group_start = time.time()
             all_groupings = group(best_trees, group_size)
-            group_sample = [all_groupings[i] for i in sorted(random.sample(range(len(all_groupings)), 
-                                                            min(100, len(all_groupings))))]
+            # group_sample = [all_groupings[i] for i in sorted(random.sample(range(len(all_groupings)), 
+            #                                                 min(100, len(all_groupings))))]
             TIME_GROUPING += time.time() - group_start
-            updated, nlg = False, len(group_sample)
-            for i, (grouping, the_score) in enumerate(group_sample):
+            updated, nlg = False, len(all_groupings)
+            for i, (grouping, the_score) in enumerate(all_groupings):
                 reapply = True
                 last = -1
                 while reapply:
                     print(('[Group len %d] Bubbling iteration %d (%d/%d)...' % (group_size, count, i + 1, nlg)).ljust(50))
                     ### Perform the bubble
                     if isinstance(grouping, Bubble):
-                        new_trees = apply(grouping, best_trees)
+                        new_trees, grouping.new_nt = apply(grouping, best_trees)
                         new_score, new_trees, coalesced_into = score(new_trees, grouping)
                         grouping_str = f"Successful grouping (single): {grouping.bubbled_elems}"#\n    (aka {[e.derived_string() for e in grouping.bubbled_elems]}"
                         grouping_str += f"\n     [score of {the_score}]"
                     else:
                         bubble_one = grouping[0]
                         bubble_two = grouping[1]
-                        new_trees = apply(bubble_one, best_trees)
-                        new_trees = apply(bubble_two, new_trees)
+                        new_trees, grouping[0].new_nt = apply(bubble_one, best_trees)
+                        new_trees, grouping[1].new_nt = apply(bubble_two, new_trees)
                         new_score, new_trees, coalesced_into = score(new_trees, grouping)
                         grouping_str = f"Successful grouping (double): {bubble_one.bubbled_elems}, {bubble_two.bubbled_elems}"
                         grouping_str += f"\n     (aka {[e.derived_string() for e in bubble_one.bubbled_elems]}, {[e.derived_string() for e in bubble_two.bubbled_elems]}))"
@@ -378,7 +378,9 @@ def build_trees(oracle, leaves):
                                     while new_nt in coalesced_into and not new_nt == coalesced_into[new_nt]:
                                         new_nt = coalesced_into[new_nt]
                                     elem.payload = new_nt
-                            grouping.new_nt = allocate_tid()
+                            while grouping.new_nt in coalesced_into and coalesced_into[grouping.new_nt] != grouping.new_nt:
+                                grouping.new_nt = coalesced_into[grouping.new_nt]
+                            # grouping.new_nt = allocate_tid()
                            
                         else:
                             for bubble in grouping:
@@ -388,10 +390,12 @@ def build_trees(oracle, leaves):
                                         while new_nt in coalesced_into and not new_nt == coalesced_into[new_nt]:
                                             new_nt = coalesced_into[new_nt]
                                         elem.payload = new_nt
-                                bubble.new_nt = allocate_tid()
+                                while bubble.new_nt in coalesced_into and coalesced_into[bubble.new_nt] != bubble.new_nt:
+                                    bubble.new_nt = coalesced_into[bubble.new_nt]
+                                # bubble.new_nt = allocate_tid()
                                 
                         updated = True
-                        threshold = 5
+                        threshold = 7
                     else:
                         reapply = False
                 if updated:
