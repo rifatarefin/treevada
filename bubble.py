@@ -87,13 +87,14 @@ class Bubble:
     the sequence, the context in which it occurs, and its overlap with other sequences.
     """
 
-    def __init__(self, new_nt: str, bubbled_elems: List[ParseNode]):
+    def __init__(self, new_nt: str, bubbled_elems: List[ParseNode], depth: int):
         self.new_nt = new_nt
         self.bubbled_elems = bubbled_elems
         self.bubble_str = ''.join([e.payload for e  in bubbled_elems])
         self.direct_parents = []
         self.occ_count = 1
         self.contexts = defaultdict(int)
+        self.depth = depth
         # sources is a map of (tree idx, (child_idxs)) -> range which allows us to map back
         # to the range that was bubbled
         self.sources = defaultdict(list)
@@ -106,6 +107,9 @@ class Bubble:
 
     def add_occurrence(self):
         self.occ_count += 1
+
+    def update_depth(self, depth):
+        self.depth = depth
 
     def add_context(self, context_lhs: List[ParseNode], context_rhs: List[ParseNode]):
         context = Context(tuple([e.payload for e in context_lhs]), tuple([e.payload for e in context_rhs]))

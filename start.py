@@ -349,7 +349,7 @@ def build_trees(oracle, leaves):
                     if isinstance(grouping, Bubble):
                         new_trees, grouping.new_nt = apply(grouping, best_trees)
                         new_score, new_trees, coalesced_into = score(new_trees, grouping)
-                        grouping_str = f"Successful grouping (single): {grouping.bubbled_elems}"#\n    (aka {[e.derived_string() for e in grouping.bubbled_elems]}"
+                        grouping_str = f"Successful grouping (single): {grouping.bubbled_elems}\n    (aka {[e.derived_string() for e in grouping.bubbled_elems]}"
                         grouping_str += f"\n     [score of {the_score}]"
                     else:
                         bubble_one = grouping[0]
