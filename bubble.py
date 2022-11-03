@@ -108,9 +108,6 @@ class Bubble:
     def add_occurrence(self):
         self.occ_count += 1
 
-    def update_depth(self, depth):
-        self.depth = depth
-
     def add_context(self, context_lhs: List[ParseNode], context_rhs: List[ParseNode]):
         context = Context(tuple([e.payload for e in context_lhs]), tuple([e.payload for e in context_rhs]))
         self.contexts[context] += 1

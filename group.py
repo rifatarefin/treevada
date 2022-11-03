@@ -45,7 +45,7 @@ def group(trees, max_group_size, last_applied_bubble = None) -> List[Bubble]:
     full_bubbles = defaultdict(int)
 
     
-    def add_groups_for_tree(tree: ParseNode, bubbles: Dict[str, Bubble], tree_idx, child_idxs, left_context="START", right_context ="END", depth=0):
+    def add_groups_for_tree(tree: ParseNode, bubbles: Dict[str, Bubble], tree_idx, child_idxs, left_context="START", right_context ="END", depth = 0):
         """
         Add all groups possible groupings derived from the parse tree `tree` to `groups`.
         """
@@ -82,7 +82,6 @@ def group(trees, max_group_size, last_applied_bubble = None) -> List[Bubble]:
                     bubble.add_occurrence()
                     bubble.add_context(lhs_context, rhs_context)
                     bubble.add_source(tree_idx, child_idxs, (i, j-1))
-                    # bubble.update_depth(depth)
 
         # Recurse down in the other layers
         for i, child in enumerate(tree.children):
@@ -163,18 +162,18 @@ def score_and_sort_bubbles(bubbles: Dict[str, Bubble]) -> List[Union[Bubble, Tup
             #     # bracketed = 0
             # bubble_depth = 0 - max(first_bubble.depth, second_bubble.depth)
             if len(first_bubble.bubbled_elems) > len(second_bubble.bubbled_elems):
-                bubble_depth = 0 - first_bubble.depth
-                bubble_len = len(first_bubble.bubbled_elems)
+                bubble_depth = first_bubble.depth
+                bubble_len = 0 - len(first_bubble.bubbled_elems)
             else:
-                bubble_depth = 0 - second_bubble.depth
-                bubble_len = len(second_bubble.bubbled_elems)
+                bubble_depth = second_bubble.depth
+                bubble_len = 0 - len(second_bubble.bubbled_elems)
             # If they're partially overlapping, we may need a particular application order.
             if first_prevents_second:
                 # need to invert the order of these, so we try all bubbles...
-                bubble_pairs.append(((similarity, bubble_depth, bubble_len, commonness), (second_bubble, first_bubble)))
+                bubble_pairs.append(((similarity, bubble_depth, commonness, bubble_len), (second_bubble, first_bubble)))
             else:
                 # either they don't conflict, or we can still do second after we apply first
-                bubble_pairs.append(((similarity, bubble_depth, bubble_len, commonness), (first_bubble, second_bubble)))
+                bubble_pairs.append(((similarity, bubble_depth, commonness, bubble_len), (first_bubble, second_bubble)))
 
     bubbles = {}
     # Sort primarily by similarity, secondarily by commonness
@@ -182,17 +181,16 @@ def score_and_sort_bubbles(bubbles: Dict[str, Bubble]) -> List[Union[Bubble, Tup
         # Turn bubbles that are paired w/ a nonterm into single bubbles
         if len(pair[0].bubbled_elems) == 1:
             # This if statement probably never happens...
-            if pair[1] not in bubbles:# and len(pair[1].bubbled_elems) > 2:
+            if pair[1] not in bubbles:
                 bubbles[pair[1]] = score
         elif len(pair[1].bubbled_elems) == 1:
-            if pair[0] not in bubbles:# and len(pair[0].bubbled_elems) > 2:
+            if pair[0] not in bubbles:
                 bubbles[pair[0]] = score
         else:
-            # if len(pair[0].bubbled_elems) > 2 or len(pair[1].bubbled_elems) > 2:
             bubbles[pair] = score
     bubbles = list(bubbles.items())
     if len(bubbles) > 100:
         bubbles = bubbles[:100]
-    random.shuffle(bubbles)
+    # random.shuffle(bubbles)
     return bubbles
     # return partial_shuffle(bubbles, 50)
