@@ -3,7 +3,7 @@ import re
 from lark import Lark
 import random
 
-#random.seed(0)
+random.seed(0)
 
 def elem_fixup(elem: str):
     """
@@ -111,7 +111,7 @@ class Grammar():
 
     def sample_positives(self, n, max_depth):
         """
-        Samples n random strings that do not belong to the grammar.
+        Samples n random strings that belong to the grammar.
         Returns the unique subset of these.
         """
         samples = set()

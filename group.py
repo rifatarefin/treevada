@@ -31,6 +31,7 @@ def is_balanced(tokens: str):
             return True
         return False
 
+imbalance = 0
 def group(trees, max_group_size, last_applied_bubble = None) -> List[Bubble]:
     """
     TREES is a set of ParseNodes.
@@ -44,7 +45,7 @@ def group(trees, max_group_size, last_applied_bubble = None) -> List[Bubble]:
     # I.e. t2 t3 t4 in t1 -> t2 t3 t4, but not in t1 -> t2 t2 t3 t4
     full_bubbles = defaultdict(int)
 
-    
+
     def add_groups_for_tree(tree: ParseNode, bubbles: Dict[str, Bubble], tree_idx, child_idxs, left_context="START", right_context ="END", depth = 0):
         """
         Add all groups possible groupings derived from the parse tree `tree` to `groups`.
@@ -62,6 +63,8 @@ def group(trees, max_group_size, last_applied_bubble = None) -> List[Bubble]:
                 # discard a bubble if it's not bracket balanced
                 stream = ''.join([child.derived_string() for child in tree_sublist])
                 if not is_balanced(stream):
+                    global imbalance
+                    imbalance += 1
                     continue
 
                 tree_substr = ''.join([t.payload for t in tree_sublist])
@@ -94,7 +97,6 @@ def group(trees, max_group_size, last_applied_bubble = None) -> List[Bubble]:
     bubbles = {}
     for tree_num, tree in enumerate(trees):
         add_groups_for_tree(tree, bubbles, tree_num, [])
-
     # Remove sequences if they're the full list of children of a rule and don't appear anywhere else.
     # Prevents us from adding ridiculous layers of indirection.
     # TODO: I think this does prevent us from learning grammars that require indirection,
@@ -103,6 +105,7 @@ def group(trees, max_group_size, last_applied_bubble = None) -> List[Bubble]:
     for bubble_str in full_bubbles:
         if bubbles[bubble_str].occ_count == full_bubbles[bubble_str]:
             bubbles.pop(bubble_str)
+    print("Number of bubbles: ", len(bubbles))
 
     bubbles = score_and_sort_bubbles(bubbles)
 

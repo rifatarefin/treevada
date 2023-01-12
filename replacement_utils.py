@@ -157,6 +157,7 @@ def lvl_n_derivable(trees, target_nt, n, max_samples=1000):
         process_tree(tree)
     if len(ret_strs) > max_samples:
         return random.sample(list(ret_strs), max_samples)
+        # return list(dict.fromkeys(ret_strs))[:max_samples]
     return list(ret_strs)
 
 def sample_from_product_ext(strings_per_child, num_samples):
@@ -189,6 +190,7 @@ def sample_from_product(strings_per_child, num_samples, lens_per_child, prod_siz
     if prod_size > sys.maxsize: prod_size = sys.maxsize//2
     ret_strings = []
     indices = random.sample(range(prod_size), num_samples)
+    # indices = [2*i if 2*i<prod_size else i for i in range(num_samples)]
     to_divide = [1 for i in range(len(strings_per_child))]
     for i in reversed(range(len(to_divide) - 1)):
         to_divide[i] = to_divide[i + 1] * lens_per_child[i + 1]
@@ -246,7 +248,7 @@ def get_all_replacement_strings(tree: ParseNode, nt_to_replace: str):
     else:
         replacement_strings.extend([''.join(p) for p in itertools.product(*strings_per_child)])
 
-    return list(set(replacement_strings))
+    return list(dict.fromkeys(replacement_strings))
 
 
 
@@ -324,6 +326,7 @@ def get_strings_with_replacement(tree: ParseNode, nt_to_replace: str, replacemen
     placeholder_strings = [s for s in placeholder_strings if REPLACE_CONST in s]
 
     ret_strings = []
+    replacement_strs = sorted(replacement_strs)
     for replacement_str in replacement_strs:
         ret_strings.extend([ps.replace(REPLACE_CONST, replacement_str) for ps in placeholder_strings])
 

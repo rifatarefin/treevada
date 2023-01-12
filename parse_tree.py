@@ -76,9 +76,9 @@ class ParseTreeList:
         Returns true if all the strings in `candidates` are derivable in the
         grammar induced by this tree list.
         """
-        candidates = set(candidates)
+        candidates_set = set(candidates)
         represented_strings = self.represented_strings()
-        if candidates.issubset(represented_strings):
+        if candidates_set.issubset(represented_strings):
             return True
         else:
             grammar_parser = self.grammar.parser()
