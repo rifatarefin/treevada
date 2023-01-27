@@ -206,7 +206,6 @@ def apply(grouping: Bubble, trees: List[ParseNode]):
     Returns a new list of trees consisting of  bubbling up the grouping
     in `grouping` for each tree in `trees`
     """
-    new_nt = allocate_tid()
     def matches(group_lst, layer):
         """
         GROUP_LST is a contiguous subarray of ParseNodes that are grouped together.
@@ -245,10 +244,14 @@ def apply(grouping: Bubble, trees: List[ParseNode]):
             old_node = new_tree.children[index]
             new_tree.children[index] = apply_single(old_node)
 
+        # Prevent single nonterminal from bubbling up
+        # if len(group_lst) == len(new_tree.children):
+        #     return new_tree
         ind = matches(group_lst, new_tree.children)
         while ind != -1:
+            # Prevent bubbling up the same nonterminal
             if not new_tree.payload == id:
-                parent = ParseNode(new_nt, False, new_tree.children[ind: ind + ng])
+                parent = ParseNode(id, False, new_tree.children[ind: ind + ng])
                 new_tree.children[ind: ind + ng] = [parent]
                 ind = matches(group_lst, new_tree.children)
             else:
@@ -257,7 +260,7 @@ def apply(grouping: Bubble, trees: List[ParseNode]):
         new_tree.update_cache_info()
         return new_tree
 
-    return [apply_single(tree) for tree in trees], new_nt
+    return [apply_single(tree) for tree in trees]
 
 
 def build_trees(oracle, leaves):
@@ -331,6 +334,8 @@ def build_trees(oracle, leaves):
     # break the group_size loop if no valid merge after increasing group size by threshold
     threshold = 5
     for group_size in range(MIN_GROUP_LEN, MAX_GROUP_LEN):
+        if group_size == 5:
+            print("5")
         count = 1
         updated = True
         while updated:
@@ -345,15 +350,15 @@ def build_trees(oracle, leaves):
                     print(('[Group len %d] Bubbling iteration %d (%d/%d)...' % (group_size, count, i + 1, nlg)).ljust(50))
                     ### Perform the bubble
                     if isinstance(grouping, Bubble):
-                        new_trees, grouping.new_nt = apply(grouping, best_trees)
+                        new_trees = apply(grouping, best_trees)
                         new_score, new_trees, coalesced_into = score(new_trees, grouping)
                         grouping_str = f"Successful grouping (single): {grouping.bubbled_elems}\n    (aka {[e.derived_string() for e in grouping.bubbled_elems]}"
                         grouping_str += f"\n     [score of {the_score}]"
                     else:
                         bubble_one = grouping[0]
                         bubble_two = grouping[1]
-                        new_trees, grouping[0].new_nt = apply(bubble_one, best_trees)
-                        new_trees, grouping[1].new_nt = apply(bubble_two, new_trees)
+                        new_trees = apply(bubble_one, best_trees)
+                        new_trees = apply(bubble_two, new_trees)
                         new_score, new_trees, coalesced_into = score(new_trees, grouping)
                         grouping_str = f"Successful grouping (double): {bubble_one.bubbled_elems}, {bubble_two.bubbled_elems}"
                         grouping_str += f"\n     (aka {[e.derived_string() for e in bubble_one.bubbled_elems]}, {[e.derived_string() for e in bubble_two.bubbled_elems]}))"
@@ -801,14 +806,16 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
         # Add the alternation rules for each class into the grammar
         for class_nt, nts in classes.items():
             rule = Rule(class_nt)
+            max_depth = 0
             for nt in nts:
                 old_rule = new_grammar.rules.pop(nt)
+                max_depth = max(max_depth, old_rule.depth)
                 for body in old_rule.bodies:
                     # Remove infinite recursions
                     if body == [class_nt]:
                         continue
                     rule.add_body(body)
-            new_grammar.add_rule(rule)
+            new_grammar.add_rule(rule, max_depth)
         return new_grammar
 
     # height of the tree for reverse order traversal
@@ -867,7 +874,9 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
 
 
     # Define helpful data structures
-    nonterminals = list(dict.fromkeys(grammar.rules.keys()))
+    # nonterminals = list(dict.fromkeys(grammar.rules.keys()))
+    nonterminals = sorted(grammar.rules.items(), key=lambda x: x[1].depth)
+    nonterminals = [x[0] for x in nonterminals]
     nonterminals.remove("start")
     # nonterminals = list(nonterminals)
     uf = UnionFind(nonterminals)

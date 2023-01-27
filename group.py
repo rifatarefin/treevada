@@ -18,8 +18,16 @@ def is_balanced(tokens: str):
         open_list = ["[","{","("]
         close_list = ["]","}",")"]
         stack = []
+        quote = []
         for i in tokens:
-            if i in open_list:
+            if len(quote) == 1:
+                if i == quote[0]:
+                    quote.pop()
+                continue
+
+            if i == "\"" or i == "\'":
+                quote.append(i)
+            elif i in open_list:
                 stack.append(i)
             elif i in close_list:
                 pos = close_list.index(i)
@@ -164,7 +172,7 @@ def score_and_sort_bubbles(bubbles: Dict[str, Bubble]) -> List[Union[Bubble, Tup
             # else:
             #     # bracketed = 0
             # bubble_depth = 0 - max(first_bubble.depth, second_bubble.depth)
-            if len(first_bubble.bubbled_elems) > len(second_bubble.bubbled_elems):
+            if first_bubble.depth > second_bubble.depth:
                 bubble_depth = first_bubble.depth
                 bubble_len = 0 - len(first_bubble.bubbled_elems)
             else:

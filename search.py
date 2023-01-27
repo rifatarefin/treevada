@@ -80,7 +80,7 @@ def main_internal(external_folder, log_file, random_guides=False):
     if random_guides:
         guide_folder = os.path.join(external_folder, "random-guides")
     else:
-        guide_folder = os.path.join(external_folder, "guides-big")
+        guide_folder = os.path.join(external_folder, "guides-big2")
     parser_command = os.path.join(external_folder, f"parse_{bench_name}")
 
     main(parser_command, guide_folder, log_file)
@@ -114,15 +114,15 @@ def main(oracle_cmd, guide_examples_folder,  log_file_name):
     has_bracket = sum([1 for g in raw_examples if "(" in g or ")" in g
                        or "[" in g or "]" in g or "{" in g or "}" in g
                        or "{" in g or "}" in g])
-    has_quote = sum([1 for g in guide_examples if "\"" in g or "'" in g])
+    has_quote = sum([1 for g in raw_examples if "\"" in g or "'" in g])
     average_guide_len = sum([len(g) for g in raw_examples])/len(raw_examples)
     max_guide_len = max([len(g) for g in raw_examples])
     print(f"Average guide length: {average_guide_len}, max guide length: {max_guide_len}")
     print(f"Guides with brackets: {has_bracket}, quotes: {has_quote}")
-    bbl_bounds = (3, 9)
-    # if average_guide_len > 1:
-    # else:
-    #     bbl_bounds = (3, 10)
+    if has_bracket > 0:
+        bbl_bounds = (3, 10)
+    else:
+        bbl_bounds = (2, 10)
 
     # Create the log file and write positive and negative examples to it
     # Also write the initial starting grammar to the file

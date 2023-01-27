@@ -338,7 +338,7 @@ def build_grammar(trees):
     GrammarNode that is the disjunction of the parse trees, and returns it.
     """
 
-    def build_rules(grammar_node, parse_node, rule_map):
+    def build_rules(grammar_node, parse_node, rule_map, depth):
         """
         Adds the rules defined in PARSE_NODE and all of its subtrees to the
         GRAMMAR_NODE via recursion. RULE_MAP is used to keep track of duplicate
@@ -363,16 +363,16 @@ def build_grammar(trees):
         rule_str = ''.join([elem for elem in rule_body])
         if rule.start not in rule_map: rule_map[rule.start] = set()
         if rule_str not in rule_map[rule.start]:
-            grammar_node.add_rule(rule)
+            grammar_node.add_rule(rule, depth)
             rule_map[rule.start].add(rule_str)
 
         # Recurse on the children of this ParseNode so the rule they define
         # are also added to the grammar.
         for child in parse_node.children:
-            build_rules(grammar_node, child, rule_map)
+            build_rules(grammar_node, child, rule_map, depth + 1)
 
     # Construct the initial grammar node without children, then fill them.
     grammar, rule_map = Grammar(START), {}
     for tree in trees:
-        build_rules(grammar, tree, rule_map)
+        build_rules(grammar, tree, rule_map, 0)
     return grammar
