@@ -80,7 +80,7 @@ def main_internal(external_folder, log_file, random_guides=False):
     if random_guides:
         guide_folder = os.path.join(external_folder, "random-guides")
     else:
-        guide_folder = os.path.join(external_folder, "guides-big2")
+        guide_folder = os.path.join(external_folder, "guides-big")
     parser_command = os.path.join(external_folder, f"parse_{bench_name}")
 
     main(parser_command, guide_folder, log_file)
@@ -117,7 +117,10 @@ def main(oracle_cmd, guide_examples_folder,  log_file_name):
     has_quote = sum([1 for g in raw_examples if "\"" in g or "'" in g])
     average_guide_len = sum([len(g) for g in raw_examples])/len(raw_examples)
     max_guide_len = max([len(g) for g in raw_examples])
-    print(f"Average guide length: {average_guide_len}, max guide length: {max_guide_len}")
+    average_token_len = sum([len(guide) for guide in guide_examples])/len(guide_examples)
+    max_token_len = max([len(guide) for guide in guide_examples])
+    print(f"Average guide length in char: {average_guide_len}, max guide length: {max_guide_len}")
+    # print(f"Average token length: {average_token_len}, max token length: {max_token_len}")
     print(f"Guides with brackets: {has_bracket}, quotes: {has_quote}")
     if has_bracket > 0:
         bbl_bounds = (3, 10)

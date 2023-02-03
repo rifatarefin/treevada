@@ -206,6 +206,7 @@ def apply(grouping: Bubble, trees: List[ParseNode]):
     Returns a new list of trees consisting of  bubbling up the grouping
     in `grouping` for each tree in `trees`
     """
+
     def matches(group_lst, layer):
         """
         GROUP_LST is a contiguous subarray of ParseNodes that are grouped together.
@@ -334,8 +335,7 @@ def build_trees(oracle, leaves):
     # break the group_size loop if no valid merge after increasing group size by threshold
     threshold = 5
     for group_size in range(MIN_GROUP_LEN, MAX_GROUP_LEN):
-        if group_size == 5:
-            print("5")
+
         count = 1
         updated = True
         while updated:
@@ -347,7 +347,7 @@ def build_trees(oracle, leaves):
                 reapply = True
                 last = -1
                 while reapply:
-                    print(('[Group len %d] Bubbling iteration %d (%d/%d)...' % (group_size, count, i + 1, nlg)).ljust(50))
+                    # print(('[Group len %d] Bubbling iteration %d (%d/%d)...' % (group_size, count, i + 1, nlg)).ljust(50))
                     ### Perform the bubble
                     if isinstance(grouping, Bubble):
                         new_trees = apply(grouping, best_trees)
@@ -371,6 +371,7 @@ def build_trees(oracle, leaves):
                             print(f"Reapply: {REAPPLY}")
                         last = i
                         print()
+                        print(('[Group len %d] Bubbling iteration %d (%d/%d)...' % (group_size, count, i + 1, nlg)).ljust(50))
                         print(grouping_str)
                         best_trees = new_trees
                         print("coalesced into: ", coalesced_into)
@@ -674,7 +675,7 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
     (found equivalent).
     """
 
-    def replacement_valid(replacer_derivable_strings, replacee, trees : ParseTreeList) -> Tuple[bool, Set[str]]:
+    def replacement_valid(replacer_derivable_strings, replacee, trees : ParseTreeList) -> Tuple[bool, List[str]]:
         """
         Returns true if every string derivable from `replacee` in `trees` can be replaced
         by every string in `replacer_derivable_strings`
@@ -717,22 +718,23 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
         """
 
         global TIME_GENERATING_EXAMPLES
-        nt1_derivable_strings = set()
-        nt2_derivable_strings = set()
+        nt1_derivable_strings = []
+        nt2_derivable_strings = []
 
         s = time.time()
         if isinstance(coalesce_target, tuple):
-            nt1_derivable_strings.update(lvl_n_derivable(trees, nt1, 1))
-            nt2_derivable_strings.update(lvl_n_derivable(trees, nt2, 1))
+            nt1_derivable_strings.extend(lvl_n_derivable(trees, nt1, 1))
+            nt2_derivable_strings.extend(lvl_n_derivable(trees, nt2, 1))
         else:
-            nt1_derivable_strings.update(lvl_n_derivable(trees, nt1, 0))
-            nt2_derivable_strings.update(lvl_n_derivable(trees, nt2, 0))
+            nt1_derivable_strings.extend(lvl_n_derivable(trees, nt1, 0))
+            nt2_derivable_strings.extend(lvl_n_derivable(trees, nt2, 0))
         TIME_GENERATING_EXAMPLES += time.time() - s
 
         # First check if the replacement is expanding
         if MUST_EXPAND_IN_COALESCE and coalesce_target is not None and nt1_derivable_strings == nt2_derivable_strings:
             return False
-
+        nt1_derivable_strings = list(dict.fromkeys(nt1_derivable_strings))
+        nt2_derivable_strings = list(dict.fromkeys(nt2_derivable_strings))
         nt1_valid, nt1_check_strings = replacement_valid(nt1_derivable_strings, nt2, trees)
         if not nt1_valid:
             return False
@@ -828,51 +830,6 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
         return max_height + 1
 
     
-    # prune tree at each non-terminal by reverse order
-    def prune_tree(trees: List[ParseNode]):
-
-        old_tree = None
-        # helper for prune_tree
-        def drop_reversed(parseNode, level, treeIndex):
-            if parseNode.is_terminal or parseNode.children[0].is_terminal:
-                return
-            if level == 1:
-                pruned = parseNode.copy()
-                parseNode.children= [ParseNode("", True, [])]
-                new_str = old_tree.derived_string()
-                try:
-                    oracle.parse(new_str)
-                    trees[treeIndex] = old_tree.copy()
-                    # if pruned not in trees:
-                    trees.append(pruned)
-                    # trees.append(old_tree.copy())
-                    # trees[-1].update_cache_info()
-                    print("valid:", old_tree.derived_string())
-                except:
-                    print("before", old_tree.derived_string())
-                    parseNode.children = pruned.children
-                    print("after", old_tree.derived_string())
-                    pass
-                # parseNode.children = pruned.children
-                
-                # old_tree.update_cache_info()
-                return
-                
-            for i in parseNode.children:
-                drop_reversed(i, level-1, treeIndex)
-
-        lng = len(trees)
-        for i in range(lng):
-            height = get_height(trees[i])
-            old_tree = trees[i].copy()
-            
-            for h in reversed(range(2, height-1)):
-                drop_reversed(old_tree, h, i)
-        for tree in trees:
-            tree.update_cache_info()
-                
-
-
     # Define helpful data structures
     # nonterminals = list(dict.fromkeys(grammar.rules.keys()))
     nonterminals = sorted(grammar.rules.items(), key=lambda x: x[1].depth)

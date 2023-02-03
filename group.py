@@ -66,6 +66,9 @@ def group(trees, max_group_size, last_applied_bubble = None) -> List[Bubble]:
         for i in range(len(children_lst)):
             
             for j in range(i + 1, min(len(children_lst) + 1, i + max_group_size + 1)):
+                if j == i + 2:
+                    # skip children of len 2
+                    continue
                 tree_sublist = children_lst[i:j]
 
                 # discard a bubble if it's not bracket balanced

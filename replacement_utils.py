@@ -142,23 +142,25 @@ def lvl_n_derivable(trees, target_nt, n, max_samples=1000):
     >>> lvl_n_derivable([tree_1, tree_2], 't0', 2)
     ['3', '(3)', '((3))', '(((3)))']
     """
-    ret_strs = set()
+    ret_strs = []
     for tree in trees:
         def process_tree(tree: ParseNode):
              if tree.payload == target_nt:
+                nonlocal ret_strs
                 if n == 0 or tree.is_terminal:
-                    ret_strs.add(tree.derived_string())
+                    ret_strs.append(tree.derived_string())
                 else:
                     child_strs = [lvl_n_derivable(trees, c.payload, n-1, max_samples) for c in tree.children]
-                    ret_strs.update(sample_from_product_ext(child_strs, max_samples))
+                    ret_strs.extend(sample_from_product_ext(child_strs, max_samples))
+                ret_strs = list(dict.fromkeys(ret_strs))
              else:
                  for c in tree.children:
                     process_tree(c)
         process_tree(tree)
     if len(ret_strs) > max_samples:
-        return random.sample(list(ret_strs), max_samples)
+        return random.sample(ret_strs, max_samples)
         # return list(dict.fromkeys(ret_strs))[:max_samples]
-    return list(ret_strs)
+    return ret_strs
 
 def sample_from_product_ext(strings_per_child, num_samples):
     lens_per_child = [len(spc) for spc in strings_per_child]
@@ -301,7 +303,7 @@ def get_all_rule_replacement_strs(tree: ParseNode, replacee_rule: Tuple[str, Lis
 
     return list(set(ret_list))
 
-def get_strings_with_replacement(tree: ParseNode, nt_to_replace: str, replacement_strs: Set[str]):
+def get_strings_with_replacement(tree: ParseNode, nt_to_replace: str, replacement_strs: List[str]):
     """
     Get all the possible strings derived from `tree` where all possible combinations
     (not including the empty combo) of instances of `nt_to_replace` are replaced
@@ -326,7 +328,6 @@ def get_strings_with_replacement(tree: ParseNode, nt_to_replace: str, replacemen
     placeholder_strings = [s for s in placeholder_strings if REPLACE_CONST in s]
 
     ret_strings = []
-    replacement_strs = sorted(replacement_strs)
     for replacement_str in replacement_strs:
         ret_strings.extend([ps.replace(REPLACE_CONST, replacement_str) for ps in placeholder_strings])
 
