@@ -317,17 +317,17 @@ def build_trees(oracle, leaves):
                     print()
                     print(grouping_str)
                     best_trees = new_trees
-                    if isinstance(grouping, Bubble):
-                        str1 = ''.join([e.derived_string() for e in grouping.bubbled_elems])
-                        if not is_balanced(str1):
-                            print("WARNING: unbalanced brackets in bubble: ", str1)
-                    else:
-                        str1 = ''.join([e.derived_string() for e in grouping[0].bubbled_elems])
-                        str2 = ''.join([e.derived_string() for e in grouping[1].bubbled_elems])
-                        if not is_balanced(str1):
-                            print("WARNING: unbalanced brackets in 2-bubble: ", str1)
-                        if not is_balanced(str2):
-                            print("WARNING: unbalanced brackets in 2-bubble: ", str2)
+                    # if isinstance(grouping, Bubble):
+                    #     str1 = ''.join([e.derived_string() for e in grouping.bubbled_elems])
+                    #     if not is_balanced(str1):
+                    #         print("WARNING: unbalanced brackets in bubble: ", str1)
+                    # else:
+                    #     str1 = ''.join([e.derived_string() for e in grouping[0].bubbled_elems])
+                    #     str2 = ''.join([e.derived_string() for e in grouping[1].bubbled_elems])
+                    #     if not is_balanced(str1):
+                    #         print("WARNING: unbalanced brackets in 2-bubble: ", str1)
+                    #     if not is_balanced(str2):
+                    #         print("WARNING: unbalanced brackets in 2-bubble: ", str2)
                     updated = True
                     break
 
