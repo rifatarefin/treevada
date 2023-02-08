@@ -1,7 +1,7 @@
 import time
 from collections import defaultdict
 from typing import List, Tuple, Set, Dict, Optional, Union
-
+import statistics
 from bubble import Bubble
 from group import group, is_balanced
 from oracle import ExternalOracle, ParseException
@@ -36,7 +36,7 @@ Bulk of the Arvada algorithm.
 MAX_SAMPLES_PER_COALESCE = 50
 MIN_GROUP_LEN = 3
 MAX_GROUP_LEN = 10
-
+GROUP_INCREMENT = False
 MUST_EXPAND_IN_COALESCE = False
 MUST_EXPAND_IN_PARTIAL= False
 
@@ -111,8 +111,7 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]], oracle: ExternalOracl
     """
     terminals = list(dict.fromkeys([leaf.payload for leaf_lst in leaves for leaf in leaf_lst]))
     get_class = {t: allocate_tid() for t in terminals}
-
-    def braces_tree(leaves: List[ParseNode], index: int, root: bool = False):
+    def braces_tree(leaves: List[ParseNode], index: int, height: int = 0, root: bool = False):
         """ 
         returns a initial parse tree based on brackets.
         input: a { b c}
@@ -123,7 +122,7 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]], oracle: ExternalOracl
               / /\ \
               { b c }
         """
-        
+        max_height = height
         children = []
         if root == False:
             
@@ -134,25 +133,28 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]], oracle: ExternalOracl
             token = node.payload
             if token == "{" or token == "[" or token == "(":
 
-                child, index = braces_tree(leaves, index)
+                child, index, child_height = braces_tree(leaves, index, height = height+1)
                 children.append(child)
+                max_height = max(max_height, child_height)
             elif token == "}" or token == "]" or token == ")":
                 children.append(ParseNode(get_class[token], False, [node]))
-                return ParseNode(allocate_tid(), False, children), index
+                return ParseNode(allocate_tid(), False, children), index, max_height
             else:
                 children.append(ParseNode(get_class[token], False, [node]))
             index+=1
 
-        return ParseNode(START, False, children)
+        return ParseNode(START, False, children), max_height
 
     
     # trees = [ParseNode(START, False, [ParseNode(get_class[leaf.payload], False, [leaf]) for leaf in leaf_lst])
     #          for leaf_lst in leaves]
     trees=[]
+    heights = []
     for leaf_list in leaves:
         leaf_str = ''.join([leaf.payload for leaf in leaf_list])
         if is_balanced(leaf_str):
-            new_children = braces_tree(leaf_list, 0, True)
+            new_children, height = braces_tree(leaf_list, 0, 0,True)
+            heights.append(height)
         else:
             print("Flat tree")
             new_children = ParseNode(START, False, [ParseNode(get_class[leaf.payload], False, [leaf]) for leaf in leaf_list])
@@ -168,8 +170,12 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]], oracle: ExternalOracl
 
         # new_tree = ParseNode(START, False, new_children)
         trees.append(new_children)
-
-
+    avg_height = sum(heights)/len(heights)
+    if avg_height > 3:
+        global GROUP_INCREMENT, MIN_GROUP_LEN
+        MIN_GROUP_LEN = 2
+        GROUP_INCREMENT = True
+    print("Average height: ", sum(heights)/len(heights), "Median height: ", sorted(heights)[len(heights)//2])
     return trees
 
 
@@ -340,7 +346,7 @@ def build_trees(oracle, leaves):
         updated = True
         while updated:
             group_start = time.time()
-            all_groupings = group(best_trees, group_size)
+            all_groupings = group(best_trees, group_size, GROUP_INCREMENT)
             TIME_GROUPING += time.time() - group_start
             updated, nlg = False, len(all_groupings)
             for i, (grouping, the_score) in enumerate(all_groupings):
@@ -385,7 +391,7 @@ def build_trees(oracle, leaves):
                             while grouping.new_nt in coalesced_into and coalesced_into[grouping.new_nt] != grouping.new_nt:
                                 grouping.new_nt = coalesced_into[grouping.new_nt]
                             # grouping.new_nt = allocate_tid()
-                           
+                        
                         else:
                             for bubble in grouping:
                                 for elem in bubble.bubbled_elems:
@@ -399,7 +405,7 @@ def build_trees(oracle, leaves):
                                 # bubble.new_nt = allocate_tid()
                                 
                         updated = True
-                        threshold = 7
+                        threshold = 6
                     else:
                         reapply = False
                 if updated:
