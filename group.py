@@ -135,5 +135,5 @@ def score_and_sort_bubbles(bubbles: Dict[str, Bubble]) -> List[Union[Bubble, Tup
     bubbles = list(bubbles.items())
     if len(bubbles) > 100:
         bubbles = bubbles[:100]
-    random.shuffle(bubbles)
+    # random.shuffle(bubbles)
     return bubbles

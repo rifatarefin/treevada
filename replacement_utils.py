@@ -142,22 +142,25 @@ def lvl_n_derivable(trees, target_nt, n, max_samples=1000):
     >>> lvl_n_derivable([tree_1, tree_2], 't0', 2)
     ['3', '(3)', '((3))', '(((3)))']
     """
-    ret_strs = set()
+    ret_strs = []
     for tree in trees:
         def process_tree(tree: ParseNode):
              if tree.payload == target_nt:
+                nonlocal ret_strs
                 if n == 0 or tree.is_terminal:
-                    ret_strs.add(tree.derived_string())
+                    ret_strs.append(tree.derived_string())
                 else:
                     child_strs = [lvl_n_derivable(trees, c.payload, n-1, max_samples) for c in tree.children]
-                    ret_strs.update(sample_from_product_ext(child_strs, max_samples))
+                    ret_strs.extend(sample_from_product_ext(child_strs, max_samples))
+                ret_strs = list(dict.fromkeys(ret_strs))
              else:
                  for c in tree.children:
                     process_tree(c)
         process_tree(tree)
     if len(ret_strs) > max_samples:
-        return random.sample(list(ret_strs), max_samples)
-    return list(ret_strs)
+        return random.sample(ret_strs, max_samples)
+        # return list(dict.fromkeys(ret_strs))[:max_samples]
+    return ret_strs
 
 def sample_from_product_ext(strings_per_child, num_samples):
     lens_per_child = [len(spc) for spc in strings_per_child]
@@ -189,6 +192,7 @@ def sample_from_product(strings_per_child, num_samples, lens_per_child, prod_siz
     if prod_size > sys.maxsize: prod_size = sys.maxsize//2
     ret_strings = []
     indices = random.sample(range(prod_size), num_samples)
+    # indices = [2*i if 2*i<prod_size else i for i in range(num_samples)]
     to_divide = [1 for i in range(len(strings_per_child))]
     for i in reversed(range(len(to_divide) - 1)):
         to_divide[i] = to_divide[i + 1] * lens_per_child[i + 1]
@@ -246,7 +250,7 @@ def get_all_replacement_strings(tree: ParseNode, nt_to_replace: str):
     else:
         replacement_strings.extend([''.join(p) for p in itertools.product(*strings_per_child)])
 
-    return list(set(replacement_strings))
+    return list(dict.fromkeys(replacement_strings))
 
 
 
@@ -299,7 +303,7 @@ def get_all_rule_replacement_strs(tree: ParseNode, replacee_rule: Tuple[str, Lis
 
     return list(set(ret_list))
 
-def get_strings_with_replacement(tree: ParseNode, nt_to_replace: str, replacement_strs: Set[str]):
+def get_strings_with_replacement(tree: ParseNode, nt_to_replace: str, replacement_strs: List[str]):
     """
     Get all the possible strings derived from `tree` where all possible combinations
     (not including the empty combo) of instances of `nt_to_replace` are replaced

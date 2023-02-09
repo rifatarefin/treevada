@@ -70,7 +70,7 @@ def main_internal(external_folder, log_file, random_guides=False):
     if random_guides:
         guide_folder = os.path.join(external_folder, "random-guides")
     else:
-        guide_folder = os.path.join(external_folder, "guides-big")
+        guide_folder = os.path.join(external_folder, "guide-big")
     parser_command = os.path.join(external_folder, f"parse_{bench_name}")
 
     main(parser_command, guide_folder, log_file)
@@ -82,9 +82,11 @@ def main(oracle_cmd, guide_examples_folder,  log_file_name):
        print("Using approximate pre-tokenization stage")
 
     guide_examples = []
+    raw_examples = []
     for filename in os.listdir(guide_examples_folder):
         full_filename = os.path.join(guide_examples_folder, filename)
         guide_raw = open(full_filename).read()
+        raw_examples.append(guide_raw)
         try:
             
             oracle.parse(guide_raw)
@@ -93,6 +95,11 @@ def main(oracle_cmd, guide_examples_folder,  log_file_name):
             print("\n xxxInvalid seed input")
             print(full_filename)
             exit(1)
+        if USE_PRETOKENIZATION:
+            guide = approx_tokenize(guide_raw)
+        else:
+            guide = [ParseNode(c, True, []) for c in guide_raw]
+        guide_examples.append(guide)
         if USE_PRETOKENIZATION:
             guide = approx_tokenize(guide_raw)
         else:

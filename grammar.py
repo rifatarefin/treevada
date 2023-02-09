@@ -3,7 +3,7 @@ import re
 from lark import Lark
 import random
 
-#random.seed(0)
+random.seed(0)
 
 def elem_fixup(elem: str):
     """
@@ -61,13 +61,16 @@ class Grammar():
     def parser_cache_valid(self):
         return self.parser_cache_hash == self._rule_hash()
 
-    def add_rule(self, rule):
+    def add_rule(self, rule, depth=None):
         if rule.start in self.rules:
             saved_rule = self.rules[rule.start]
             for rule_body in rule.bodies:
                 saved_rule.add_body(rule_body)
         else:
             self.rules[rule.start] = rule
+
+        if depth is not None:
+            self.rules[rule.start].depth = max(depth, rule.depth)
 
         self.cache_hash = self._rule_hash()
 
@@ -111,17 +114,17 @@ class Grammar():
 
     def sample_positives(self, n, max_depth):
         """
-        Samples n random strings that do not belong to the grammar.
+        Samples n random strings that belong to the grammar.
         Returns the unique subset of these.
         """
         samples = set()
         attempts = 0
-        while len(samples) < n and attempts < 10*n:
+        while len(samples) < n and attempts < 40*n:
             attempts += 1
             try:
                 sample = self.generate_positive_example(max_depth)
-                # if len(sample) > 300:
-                #     continue
+                if len(sample) > 300:
+                    continue
                 samples.add(sample)
             except RecursionError:
                 continue
@@ -190,11 +193,13 @@ class Rule():
         self.bodies = []
         self.cached_str = ""
         self.cache_hash = 0
+        self.depth = -1
 
     def copy(self):
         new_rule = Rule(self.start)
         for body in self.bodies:
             new_rule.add_body(body[:])
+        new_rule.depth = self.depth
         return new_rule
 
     def add_body(self, body):

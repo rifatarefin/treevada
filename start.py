@@ -109,7 +109,7 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]]):
     character to its own nonterminal, and uniting them all under the START
     nonterminal.
     """
-    terminals = list(set([leaf.payload for leaf_lst in leaves for leaf in leaf_lst]))
+    terminals = list(dict.fromkeys([leaf.payload for leaf_lst in leaves for leaf in leaf_lst]))
     get_class = {t: allocate_tid() for t in terminals}
     trees = [ParseNode(START, False, [ParseNode(get_class[leaf.payload], False, [leaf]) for leaf in leaf_lst])
              for leaf_lst in leaves]
@@ -596,7 +596,7 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
     (found equivalent).
     """
 
-    def replacement_valid(replacer_derivable_strings, replacee, trees : ParseTreeList) -> Tuple[bool, Set[str]]:
+    def replacement_valid(replacer_derivable_strings, replacee, trees : ParseTreeList) -> Tuple[bool, List[str]]:
         """
         Returns true if every string derivable from `replacee` in `trees` can be replaced
         by every string in `replacer_derivable_strings`
@@ -604,9 +604,9 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
 
         # Get the set of positive examples with strings derivable from replacer
         # replaced with strings derivable from replacee
-        replaced_strings = set()
+        replaced_strings = []
         for tree in trees:
-            replaced_strings.update(get_strings_with_replacement(tree, replacee, replacer_derivable_strings))
+            replaced_strings.extend(get_strings_with_replacement(tree, replacee, replacer_derivable_strings))
 
         if len(replaced_strings) == 0:
             # TODO: See the failing doctest in bubble.py. Pickle below for a "real" example
@@ -616,9 +616,11 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
             return False, set()
         #assert (replaced_strings)
 
-        replaced_strings = list(replaced_strings)
+        replaced_strings = list(dict.fromkeys(replaced_strings))
+        # replaced_strings = sorted(replaced_strings)
         if len(replaced_strings) > MAX_SAMPLES_PER_COALESCE:
             replaced_strings = random.sample(replaced_strings, MAX_SAMPLES_PER_COALESCE)
+            # replaced_strings = replaced_strings[:MAX_SAMPLES_PER_COALESCE]
         else:
             random.shuffle(replaced_strings)
 
@@ -628,7 +630,7 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
                 oracle.parse(s)
             except:
                 return False, set()
-        return True, set(replaced_strings)
+        return True, replaced_strings
 
     def replacement_valid_and_expanding(nt1, nt2, trees: ParseTreeList):
         """
@@ -637,22 +639,23 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
         """
 
         global TIME_GENERATING_EXAMPLES
-        nt1_derivable_strings = set()
-        nt2_derivable_strings = set()
+        nt1_derivable_strings = []
+        nt2_derivable_strings = []
 
         s = time.time()
         if isinstance(coalesce_target, tuple):
-            nt1_derivable_strings.update(lvl_n_derivable(trees, nt1, 1))
-            nt2_derivable_strings.update(lvl_n_derivable(trees, nt2, 1))
+            nt1_derivable_strings.extend(lvl_n_derivable(trees, nt1, 1))
+            nt2_derivable_strings.extend(lvl_n_derivable(trees, nt2, 1))
         else:
-            nt1_derivable_strings.update(lvl_n_derivable(trees, nt1, 0))
-            nt2_derivable_strings.update(lvl_n_derivable(trees, nt2, 0))
+            nt1_derivable_strings.extend(lvl_n_derivable(trees, nt1, 0))
+            nt2_derivable_strings.extend(lvl_n_derivable(trees, nt2, 0))
         TIME_GENERATING_EXAMPLES += time.time() - s
 
         # First check if the replacement is expanding
         if MUST_EXPAND_IN_COALESCE and coalesce_target is not None and nt1_derivable_strings == nt2_derivable_strings:
             return False
-
+        nt1_derivable_strings = list(dict.fromkeys(nt1_derivable_strings))
+        nt2_derivable_strings = list(dict.fromkeys(nt2_derivable_strings))
         nt1_valid, nt1_check_strings = replacement_valid(nt1_derivable_strings, nt2, trees)
         if not nt1_valid:
             return False
@@ -706,9 +709,11 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
             new_tree = tree.copy()
             replace_coalesced_nonterminals(new_tree)
             fix_double_indirection(new_tree)
+            new_tree.update_cache_info()
             new_trees.append(new_tree)
         return new_trees
-
+    # classes = {class_nt: [first, second]}
+    # get_class = {first: class_nt, second: class_nt}
     def get_updated_grammar(classes: Dict[str, List[str]], get_class: Dict[str, str], grammar):
         # Traverse through the grammar, and update each nonterminal to point to
         # its class nonterminal
@@ -724,20 +729,24 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
         # Add the alternation rules for each class into the grammar
         for class_nt, nts in classes.items():
             rule = Rule(class_nt)
+            max_depth = 0
             for nt in nts:
                 old_rule = new_grammar.rules.pop(nt)
+                max_depth = max(max_depth, old_rule.depth)
                 for body in old_rule.bodies:
                     # Remove infinite recursions
                     if body == [class_nt]:
                         continue
                     rule.add_body(body)
-            new_grammar.add_rule(rule)
+            new_grammar.add_rule(rule, max_depth)
         return new_grammar
 
     # Define helpful data structures
-    nonterminals = set(grammar.rules.keys())
+    # nonterminals = list(dict.fromkeys(grammar.rules.keys()))
+    nonterminals = sorted(grammar.rules.items(), key=lambda x: x[1].depth)
+    nonterminals = [x[0] for x in nonterminals]
     nonterminals.remove("start")
-    nonterminals = list(nonterminals)
+    # nonterminals = list(nonterminals)
     uf = UnionFind(nonterminals)
 
     # Get all unique pairs of nonterminals
@@ -761,6 +770,7 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
     coalesced_into = {}
     checked = set()
     tree_list = ParseTreeList(trees, grammar)
+    merges = 0
     for pair in pairs:
         first, second = pair
         # update the pair for the new grammar, because the pair was created before
@@ -792,8 +802,12 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
             new_inner_trees = get_updated_trees(get_class, tree_list.inner_list)
             tree_list = ParseTreeList(new_inner_trees, grammar)
             coalesce_caused = True
-
+            merges += 1
     trees = tree_list.inner_list
+    # prune tree 
+    # if coalesce_caused:
+    #     prune_tree(trees)
+    # grammar = build_grammar(trees)
     return grammar, trees, coalesce_caused
 
 
