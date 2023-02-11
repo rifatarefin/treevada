@@ -48,14 +48,14 @@ MINIMIZE_TIME = 0
 
 TIME_GENERATING_EXAMPLES = 0
 TIME_GROUPING = 0
-
+REAPPLY = 0
 
 def get_times():
     from replacement_utils import TIME_GENERATING_EXAMPLES_INTERNAL
     return {'FIRST_COALESCE' : ORIGINAL_COALESCE_TIME, 'BUILD': BUILD_TIME,
             'LAST_COALESCE' : LAST_COALESCE_TIME, 'EXPAND': EXPAND_TIME, 'MINIMIZE': MINIMIZE_TIME,
             'OVERALL_EXAMPLE_GEN': TIME_GENERATING_EXAMPLES + TIME_GENERATING_EXAMPLES_INTERNAL,
-            'OVERALL_GROUPING': TIME_GROUPING}
+            'OVERALL_GROUPING': TIME_GROUPING, 'REAPPLY_COUNT': REAPPLY}
 
 def check_recall(oracle, grammar: Grammar):
     """
@@ -90,7 +90,7 @@ def build_start_grammar(oracle, leaves, bbl_bounds = (3,10)):
     grammar = build_grammar(trees)
     print('Coalescing nonterminals...'.ljust(50), end='\r')
     s = time.time()
-    grammar, new_trees, coalesce_caused = coalesce(oracle, trees, grammar)
+    grammar, new_trees, coalesce_caused, _ = coalesce(oracle, trees, grammar)
     grammar, new_trees, partial_coalesces = coalesce_partial(oracle, new_trees, grammar)
     LAST_COALESCE_TIME += time.time() - s
     s = time.time()
@@ -190,9 +190,13 @@ def apply(grouping: Bubble, trees: List[ParseNode]):
 
         ind = matches(group_lst, new_tree.children)
         while ind != -1:
-            parent = ParseNode(id, False, new_tree.children[ind: ind + ng])
-            new_tree.children[ind: ind + ng] = [parent]
-            ind = matches(group_lst, new_tree.children)
+            # Prevent bubbling up the same nonterminal
+            if not new_tree.payload == id:
+                parent = ParseNode(id, False, new_tree.children[ind: ind + ng])
+                new_tree.children[ind: ind + ng] = [parent]
+                ind = matches(group_lst, new_tree.children)
+            else:
+                ind = -1
 
         new_tree.update_cache_info()
         return new_tree
@@ -239,7 +243,7 @@ def build_trees(oracle, leaves):
         # Convert LAYERS into a grammar
         grammar = build_grammar(trees)
 
-        grammar, new_trees, coalesce_caused = coalesce(oracle, trees, grammar, new_bubble)
+        grammar, new_trees, coalesce_caused, coalesced_into = coalesce(oracle, trees, grammar, new_bubble)
         if not coalesce_caused and not isinstance(new_bubble, tuple):
             grammar, new_trees, partial_coalesces = coalesce_partial(oracle, trees, grammar, new_bubble)
             if partial_coalesces:
@@ -249,16 +253,16 @@ def build_trees(oracle, leaves):
         # grammar = minimize(grammar)
         new_size = grammar.size()
         if coalesce_caused:
-            return 1, new_trees
+            return 1, new_trees, coalesced_into
         else:
-            return 0, trees
+            return 0, trees, {}
 
 
     best_trees = build_naive_parse_trees(leaves)
     grammar = build_grammar(best_trees)
     s = time.time()
     print("Beginning coalescing...".ljust(50))
-    grammar, best_trees, _ = coalesce(oracle, best_trees, grammar)
+    grammar, best_trees, _, _ = coalesce(oracle, best_trees, grammar)
     grammar, best_trees, _ = coalesce_partial(oracle, best_trees, grammar)
     ORIGINAL_COALESCE_TIME += time.time() - s
 
@@ -296,41 +300,65 @@ def build_trees(oracle, leaves):
             TIME_GROUPING += time.time() - group_start
             updated, nlg = False, len(all_groupings)
             for i, (grouping, the_score) in enumerate(all_groupings):
-                print(('[Group len %d] Bubbling iteration %d (%d/%d)...' % (group_size, count, i + 1, nlg)).ljust(50), end='\r')
-                ### Perform the bubble
-                if isinstance(grouping, Bubble):
-                    new_trees = apply(grouping, best_trees)
-                    new_score, new_trees = score(new_trees, grouping)
-                    grouping_str = f"Successful grouping (single): {grouping.bubbled_elems}"#\n    (aka {[e.derived_string() for e in grouping.bubbled_elems]}"
-                    grouping_str += f"\n     [score of {the_score}]"
-                else:
-                    bubble_one = grouping[0]
-                    bubble_two = grouping[1]
-                    new_trees = apply(bubble_one, best_trees)
-                    new_trees = apply(bubble_two, new_trees)
-                    new_score, new_trees = score(new_trees, grouping)
-                    grouping_str = f"Successful grouping (double): {bubble_one.bubbled_elems}, {bubble_two.bubbled_elems}"
-                    grouping_str += f"\n     (aka {[e.derived_string() for e in bubble_one.bubbled_elems]}, {[e.derived_string() for e in bubble_two.bubbled_elems]}))"
-                    grouping_str += f"\n     [score of {the_score}]"
-                ### Score
-                if new_score > 0:
-                    print()
-                    print(grouping_str)
-                    best_trees = new_trees
-                    # if isinstance(grouping, Bubble):
-                    #     str1 = ''.join([e.derived_string() for e in grouping.bubbled_elems])
-                    #     if not is_balanced(str1):
-                    #         print("WARNING: unbalanced brackets in bubble: ", str1)
-                    # else:
-                    #     str1 = ''.join([e.derived_string() for e in grouping[0].bubbled_elems])
-                    #     str2 = ''.join([e.derived_string() for e in grouping[1].bubbled_elems])
-                    #     if not is_balanced(str1):
-                    #         print("WARNING: unbalanced brackets in 2-bubble: ", str1)
-                    #     if not is_balanced(str2):
-                    #         print("WARNING: unbalanced brackets in 2-bubble: ", str2)
-                    updated = True
+                reapply = True
+                last = -1
+                while reapply:
+                    # print(('[Group len %d] Bubbling iteration %d (%d/%d)...' % (group_size, count, i + 1, nlg)).ljust(50))
+                    ### Perform the bubble
+                    if isinstance(grouping, Bubble):
+                        new_trees = apply(grouping, best_trees)
+                        new_score, new_trees, coalesced_into = score(new_trees, grouping)
+                        grouping_str = f"Successful grouping (single): {grouping.bubbled_elems}\n    (aka {[e.derived_string() for e in grouping.bubbled_elems]}"
+                        grouping_str += f"\n     [score of {the_score}]"
+                    else:
+                        bubble_one = grouping[0]
+                        bubble_two = grouping[1]
+                        new_trees = apply(bubble_one, best_trees)
+                        new_trees = apply(bubble_two, new_trees)
+                        new_score, new_trees, coalesced_into = score(new_trees, grouping)
+                        grouping_str = f"Successful grouping (double): {bubble_one.bubbled_elems}, {bubble_two.bubbled_elems}"
+                        grouping_str += f"\n     (aka {[e.derived_string() for e in bubble_one.bubbled_elems]}, {[e.derived_string() for e in bubble_two.bubbled_elems]}))"
+                        grouping_str += f"\n     [score of {the_score}]"
+                    ### Score
+                    if new_score > 0:
+                        if i == last:
+                            global REAPPLY
+                            REAPPLY += 1
+                            print(f"Reapply: {REAPPLY}")
+                        last = i
+                        print()
+                        print(('[Group len %d] Bubbling iteration %d (%d/%d)...' % (group_size, count, i + 1, nlg)).ljust(50))
+                        print(grouping_str)
+                        best_trees = new_trees
+                        print("coalesced into: ", coalesced_into)
+                        if isinstance(grouping, Bubble):
+                            for elem in grouping.bubbled_elems:
+                                if elem.payload in coalesced_into:
+                                    new_nt = coalesced_into[elem.payload]
+                                    while new_nt in coalesced_into and not new_nt == coalesced_into[new_nt]:
+                                        new_nt = coalesced_into[new_nt]
+                                    elem.payload = new_nt
+                            while grouping.new_nt in coalesced_into and coalesced_into[grouping.new_nt] != grouping.new_nt:
+                                grouping.new_nt = coalesced_into[grouping.new_nt]
+                            # grouping.new_nt = allocate_tid()
+                        
+                        else:
+                            for bubble in grouping:
+                                for elem in bubble.bubbled_elems:
+                                    if elem.payload in coalesced_into:
+                                        new_nt = coalesced_into[elem.payload]
+                                        while new_nt in coalesced_into and not new_nt == coalesced_into[new_nt]:
+                                            new_nt = coalesced_into[new_nt]
+                                        elem.payload = new_nt
+                                while bubble.new_nt in coalesced_into and coalesced_into[bubble.new_nt] != bubble.new_nt:
+                                    bubble.new_nt = coalesced_into[bubble.new_nt]
+                                # bubble.new_nt = allocate_tid()
+                                
+                        updated = True
+                    else:
+                        reapply = False
+                if updated:
                     break
-
             count = count + 1
 
         if group_size > max_example_size:
@@ -517,9 +545,9 @@ def coalesce_partial(oracle, trees: List[ParseNode], grammar: Grammar,
 
     #################### END HELPERS ########################
 
-    nonterminals = set(grammar.rules.keys())
+    nonterminals = sorted(grammar.rules.items(), key=lambda x: x[1].depth)
+    nonterminals = [x[0] for x in nonterminals]
     nonterminals.remove("start")
-    nonterminals = list(nonterminals)
 
     # Ranging over the nonterminals that need to be fully replaced by the
     # other in the list (other must replace this one at every location)
@@ -613,7 +641,7 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
             #import pickle
             #pickle.dump(coalesce_target, open('overlap-bug.pkl', "wb"))
             #print(f"Oopsie with {coalesce_target}.\nPretty sure this is an overlap bug that I know of.... so let's just skip it")
-            return False, set()
+            return False, []
         #assert (replaced_strings)
 
         replaced_strings = list(dict.fromkeys(replaced_strings))
@@ -629,7 +657,7 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
             try:
                 oracle.parse(s)
             except:
-                return False, set()
+                return False, []
         return True, replaced_strings
 
     def replacement_valid_and_expanding(nt1, nt2, trees: ParseTreeList):
@@ -808,7 +836,7 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
     # if coalesce_caused:
     #     prune_tree(trees)
     # grammar = build_grammar(trees)
-    return grammar, trees, coalesce_caused
+    return grammar, trees, coalesce_caused, coalesced_into
 
 
 def minimize(grammar):
