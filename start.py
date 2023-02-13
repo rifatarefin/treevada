@@ -698,7 +698,7 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
             #import pickle
             #pickle.dump(coalesce_target, open('overlap-bug.pkl', "wb"))
             #print(f"Oopsie with {coalesce_target}.\nPretty sure this is an overlap bug that I know of.... so let's just skip it")
-            return False, set()
+            return False, []
         #assert (replaced_strings)
 
         replaced_strings = list(dict.fromkeys(replaced_strings))
@@ -714,7 +714,7 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
             try:
                 oracle.parse(s)
             except:
-                return False, set()
+                return False, []
         return True, replaced_strings
 
     def replacement_valid_and_expanding(nt1, nt2, trees: ParseTreeList):

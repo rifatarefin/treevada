@@ -124,15 +124,6 @@ def group(trees, max_group_size, increment: bool, last_applied_bubble = None) ->
     return bubbles
 
         
-def partial_shuffle(lst, randomness):
-    """
-    Shuffle only 'randomness' percent of the list
-    """
-    for _ in range(ceil(len(lst) * randomness / (2 * 100))):
-        i = random.randint(0, len(lst) - 1)
-        j = random.randint(0, len(lst) - 1)
-        lst[i], lst[j] = lst[j], lst[i]
-    return lst
 
 def score_and_sort_bubbles(bubbles: Dict[str, Bubble]) -> List[Union[Bubble, Tuple[Bubble, Bubble]]]:
     """
