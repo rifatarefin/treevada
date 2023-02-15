@@ -9,7 +9,35 @@ from parse_tree import ParseNode
 last_bubble_lst = None
 last_bubble_pairs = None
 
-def group(trees, max_group_size, last_applied_bubble = None) -> List[Bubble]:
+def is_balanced(tokens: str):
+        """
+        helper function to check if a bubble has balanced brackets.
+        """
+        open_list = ["[","{","("]
+        close_list = ["]","}",")"]
+        stack = []
+        quote = []
+        for i in tokens:
+            if len(quote) == 1:
+                if i == quote[0]:
+                    quote.pop()
+                continue
+
+            if i == "\"" or i == "\'":
+                quote.append(i)
+            elif i in open_list:
+                stack.append(i)
+            elif i in close_list:
+                pos = close_list.index(i)
+                if (stack and open_list[pos] == stack[-1]):
+                    stack.pop()
+                else:
+                    return False
+        if not stack:
+            return True
+        return False
+
+def group(trees, max_group_size, increment: bool, last_applied_bubble = None) -> List[Bubble]:
     """
     TREES is a set of ParseNodes.
 
@@ -32,7 +60,10 @@ def group(trees, max_group_size, last_applied_bubble = None) -> List[Bubble]:
         #     return
 
         for i in range(len(children_lst)):
-            for j in range(i + 1, min(len(children_lst) + 1, i + max_group_size + 1)):
+            inc = 1
+            if increment:
+                inc = max_group_size - 1
+            for j in range(i + 1, min(len(children_lst) + 1, i + max_group_size + 1), inc):
                 tree_sublist = children_lst[i:j]
                 tree_substr = ''.join([t.payload for t in tree_sublist])
                 if i == 0 and j == len(children_lst):

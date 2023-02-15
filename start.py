@@ -3,8 +3,8 @@ from collections import defaultdict
 from typing import List, Tuple, Set, Dict, Optional, Union
 
 from bubble import Bubble
-from group import group
-from oracle import ParseException
+from group import group, is_balanced
+from oracle import ParseException, ExternalOracle
 from parse_tree import ParseNode, ParseTreeList, build_grammar, START
 from grammar import *
 from token_expansion import expand_tokens
@@ -36,7 +36,7 @@ Bulk of the Arvada algorithm.
 MAX_SAMPLES_PER_COALESCE = 50
 MIN_GROUP_LEN = 3
 MAX_GROUP_LEN = 10
-
+GROUP_INCREMENT = False
 MUST_EXPAND_IN_COALESCE = False
 MUST_EXPAND_IN_PARTIAL= False
 
@@ -103,7 +103,7 @@ def build_start_grammar(oracle, leaves, bbl_bounds = (3,10)):
     return grammar
 
 
-def build_naive_parse_trees(leaves: List[List[ParseNode]]):
+def build_naive_parse_trees(leaves: List[List[ParseNode]], oracle: ExternalOracle):
     """
     Builds naive parse trees for each leaf in `leaves`, assigning each unique
     character to its own nonterminal, and uniting them all under the START
@@ -111,8 +111,71 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]]):
     """
     terminals = list(dict.fromkeys([leaf.payload for leaf_lst in leaves for leaf in leaf_lst]))
     get_class = {t: allocate_tid() for t in terminals}
-    trees = [ParseNode(START, False, [ParseNode(get_class[leaf.payload], False, [leaf]) for leaf in leaf_lst])
-             for leaf_lst in leaves]
+    def braces_tree(leaves: List[ParseNode], index: int, height: int = 0, root: bool = False):
+        """ 
+        returns a initial parse tree based on brackets.
+        input: a { b c}
+        parse tree: 
+             START
+             /  \
+            a   t1
+              / /\ \
+              { b c }
+        """
+        max_height = height
+        children = []
+        if root == False:
+            
+            children.append(ParseNode(get_class[leaves[index].payload], False, [leaves[index]]))
+            index+=1
+        while index<len(leaves):
+            node = leaves[index]
+            token = node.payload
+            if token == "{" or token == "[" or token == "(":
+
+                child, index, child_height = braces_tree(leaves, index, height = height+1)
+                children.append(child)
+                max_height = max(max_height, child_height)
+            elif token == "}" or token == "]" or token == ")":
+                children.append(ParseNode(get_class[token], False, [node]))
+                return ParseNode(allocate_tid(), False, children), index, max_height
+            else:
+                children.append(ParseNode(get_class[token], False, [node]))
+            index+=1
+
+        return ParseNode(START, False, children), max_height
+
+    
+    # trees = [ParseNode(START, False, [ParseNode(get_class[leaf.payload], False, [leaf]) for leaf in leaf_lst])
+    #          for leaf_lst in leaves]
+    trees=[]
+    heights = []
+    for leaf_list in leaves:
+        leaf_str = ''.join([leaf.payload for leaf in leaf_list])
+        if is_balanced(leaf_str):
+            new_children, height = braces_tree(leaf_list, 0, 0,True)
+            heights.append(height)
+        else:
+            print("Flat tree")
+            new_children = ParseNode(START, False, [ParseNode(get_class[leaf.payload], False, [leaf]) for leaf in leaf_list])
+
+        new_children.update_cache_info()
+        try:
+            
+            oracle.parse(new_children.derived_string())
+
+        except:
+            print("\nInvalid seed input")
+            exit(1)
+
+        # new_tree = ParseNode(START, False, new_children)
+        trees.append(new_children)
+    avg_height = sum(heights)/len(heights)
+    if avg_height > 3:
+        global GROUP_INCREMENT, MIN_GROUP_LEN
+        MIN_GROUP_LEN = 2
+        GROUP_INCREMENT = True
+    print("Average height: ", sum(heights)/len(heights), "Median height: ", sorted(heights)[len(heights)//2])
     return trees
 
 
@@ -258,7 +321,7 @@ def build_trees(oracle, leaves):
             return 0, trees, {}
 
 
-    best_trees = build_naive_parse_trees(leaves)
+    best_trees = build_naive_parse_trees(leaves, oracle)
     grammar = build_grammar(best_trees)
     s = time.time()
     print("Beginning coalescing...".ljust(50))
@@ -269,34 +332,15 @@ def build_trees(oracle, leaves):
 
     max_example_size = max([len(leaf_lst) for leaf_lst in leaves])
 
-    def is_balanced(tokens: str):
-        """
-        helper function to check if a bubble has balanced brackets.
-        """
-        open_list = ["[","{","("]
-        close_list = ["]","}",")"]
-        stack = []
-        for i in tokens:
-            if i in open_list:
-                stack.append(i)
-            elif i in close_list:
-                pos = close_list.index(i)
-                if (stack and open_list[pos] == stack[-1]):
-                    stack.pop()
-                else:
-                    return False
-        if not stack:
-            return True
-        return False
-
     s = time.time()
     # Main algorithm loop. Iteratively increase the length of groups allowed from MIN_GROUP_LEN to MAX_GROUP_LEN
+    threshold = 5
     for group_size in range(MIN_GROUP_LEN, MAX_GROUP_LEN):
         count = 1
         updated = True
         while updated:
             group_start = time.time()
-            all_groupings = group(best_trees, group_size)
+            all_groupings = group(best_trees, group_size, GROUP_INCREMENT)
             TIME_GROUPING += time.time() - group_start
             updated, nlg = False, len(all_groupings)
             for i, (grouping, the_score) in enumerate(all_groupings):
@@ -355,13 +399,15 @@ def build_trees(oracle, leaves):
                                 # bubble.new_nt = allocate_tid()
                                 
                         updated = True
+                        threshold = 6
                     else:
                         reapply = False
                 if updated:
                     break
             count = count + 1
 
-        if group_size > max_example_size:
+        threshold -= 1
+        if group_size > max_example_size or threshold == 0:
             break
 
     BUILD_TIME += time.time() - s
@@ -510,7 +556,8 @@ def coalesce_partial(oracle, trees: List[ParseNode], grammar: Grammar,
         alt_rule_bodies.extend(grammar.rules[nt_to_partially_replace].bodies)
         grammar.rules.pop(full_replacement_nt)
         alt_rule.bodies = alt_rule_bodies
-        grammar.add_rule(alt_rule)
+        depth = grammar.rules[nt_to_partially_replace].depth
+        grammar.add_rule(alt_rule, depth)
         if not partially_replace_on_rhs:
             grammar.rules.pop(nt_to_partially_replace)
         return grammar

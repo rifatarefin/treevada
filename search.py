@@ -18,9 +18,20 @@ USE_PRETOKENIZATION = True
 
 GROUP_PUNCTUATION = False
 SPLIT_UPPER_AND_LOWER = True
+quote = []
 
 def approx_tokenize(guide_raw:str):
     def get_category(c):
+        # everything surrounded by quote is grouped
+        if len(quote)==1:
+            if c == quote[0]:
+                quote.pop()
+                return None
+            else:
+                return "LETTER"
+        if c=="\"" or c=="\'":
+            quote.append(c)
+            return None
         if not SPLIT_UPPER_AND_LOWER and c in string.ascii_letters:
             return "LETTER"
         if SPLIT_UPPER_AND_LOWER and c in string.ascii_uppercase:
@@ -106,11 +117,21 @@ def main(oracle_cmd, guide_examples_folder,  log_file_name):
             guide = [ParseNode(c, True, []) for c in guide_raw]
         guide_examples.append(guide)
 
-    average_guide_len = sum([len(g) for g in guide_examples])/len(guide_examples)
-    if average_guide_len > 40:
-        bbl_bounds = (6, 20)
-    else:
+    has_bracket = sum([1 for g in raw_examples if "(" in g or ")" in g
+                       or "[" in g or "]" in g or "{" in g or "}" in g
+                       or "{" in g or "}" in g])
+    has_quote = sum([1 for g in raw_examples if "\"" in g or "'" in g])
+    average_guide_len = sum([len(g) for g in raw_examples])/len(raw_examples)
+    max_guide_len = max([len(g) for g in raw_examples])
+    average_token_len = sum([len(guide) for guide in guide_examples])/len(guide_examples)
+    max_token_len = max([len(guide) for guide in guide_examples])
+    print(f"Average guide length in char: {average_guide_len}, max guide length: {max_guide_len}")
+    # print(f"Average token length: {average_token_len}, max token length: {max_token_len}")
+    print(f"Guides with brackets: {has_bracket}, quotes: {has_quote}")
+    if has_bracket > 0:
         bbl_bounds = (3, 10)
+    else:
+        bbl_bounds = (2, 10)
 
     # Create the log file and write positive and negative examples to it
     # Also write the initial starting grammar to the file
