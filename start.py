@@ -103,7 +103,7 @@ def build_start_grammar(oracle, leaves, bbl_bounds = (3,10)):
     return grammar
 
 
-def build_naive_parse_trees(leaves: List[List[ParseNode]], oracle: ExternalOracle):
+def build_naive_parse_trees(leaves: List[List[ParseNode]], bracket_items: List, oracle: ExternalOracle):
     """
     Builds naive parse trees for each leaf in `leaves`, assigning each unique
     character to its own nonterminal, and uniting them all under the START
@@ -111,7 +111,8 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]], oracle: ExternalOracl
     """
     terminals = list(dict.fromkeys([leaf.payload for leaf_lst in leaves for leaf in leaf_lst]))
     get_class = {t: allocate_tid() for t in terminals}
-    def braces_tree(leaves: List[ParseNode], index: int, height: int = 0, root: bool = False):
+
+    def braces_tree(leaves: List[ParseNode], index: int, root: bool = False):
         """ 
         returns a initial parse tree based on brackets.
         input: a { b c}
@@ -122,7 +123,7 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]], oracle: ExternalOracl
               / /\ \
               { b c }
         """
-        max_height = height
+        
         children = []
         if root == False:
             
@@ -133,28 +134,26 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]], oracle: ExternalOracl
             token = node.payload
             if token == "{" or token == "[" or token == "(":
 
-                child, index, child_height = braces_tree(leaves, index, height = height+1)
+                child, index = braces_tree(leaves, index)
                 children.append(child)
-                max_height = max(max_height, child_height)
             elif token == "}" or token == "]" or token == ")":
                 children.append(ParseNode(get_class[token], False, [node]))
-                return ParseNode(allocate_tid(), False, children), index, max_height
+                bracket_items.append(len(children)-2)
+                return ParseNode(allocate_tid(), False, children), index
             else:
                 children.append(ParseNode(get_class[token], False, [node]))
             index+=1
 
-        return ParseNode(START, False, children), max_height
+        return ParseNode(START, False, children)
 
     
     # trees = [ParseNode(START, False, [ParseNode(get_class[leaf.payload], False, [leaf]) for leaf in leaf_lst])
     #          for leaf_lst in leaves]
     trees=[]
-    heights = []
     for leaf_list in leaves:
         leaf_str = ''.join([leaf.payload for leaf in leaf_list])
         if is_balanced(leaf_str):
-            new_children, height = braces_tree(leaf_list, 0, 0,True)
-            heights.append(height)
+            new_children = braces_tree(leaf_list, index = 0, root= True)
         else:
             print("Flat tree")
             new_children = ParseNode(START, False, [ParseNode(get_class[leaf.payload], False, [leaf]) for leaf in leaf_list])
@@ -170,12 +169,12 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]], oracle: ExternalOracl
 
         # new_tree = ParseNode(START, False, new_children)
         trees.append(new_children)
-    avg_height = sum(heights)/len(heights)
-    if avg_height > 3:
+    if len(bracket_items) > 0 and sum(bracket_items)/len(bracket_items) < 8:
         global GROUP_INCREMENT, MIN_GROUP_LEN
         MIN_GROUP_LEN = 2
         GROUP_INCREMENT = True
-    print("Average height: ", sum(heights)/len(heights), "Median height: ", sorted(heights)[len(heights)//2])
+        print("Average number of elements in a bracket: ", sum(bracket_items)/len(bracket_items))
+
     return trees
 
 
@@ -324,7 +323,7 @@ def build_trees(oracle, leaves):
             return 0, trees, {}
 
 
-    best_trees = build_naive_parse_trees(leaves, oracle)
+    best_trees = build_naive_parse_trees(leaves, [], oracle)
     grammar = build_grammar(best_trees)
     s = time.time()
     print("Beginning coalescing...".ljust(50))
