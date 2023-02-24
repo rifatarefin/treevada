@@ -510,7 +510,8 @@ def coalesce_partial(oracle, trees: List[ParseNode], grammar: Grammar,
         alt_rule_bodies.extend(grammar.rules[nt_to_partially_replace].bodies)
         grammar.rules.pop(full_replacement_nt)
         alt_rule.bodies = alt_rule_bodies
-        grammar.add_rule(alt_rule)
+        depth = grammar.rules[nt_to_partially_replace].depth
+        grammar.add_rule(alt_rule, depth)
         if not partially_replace_on_rhs:
             grammar.rules.pop(nt_to_partially_replace)
         return grammar
