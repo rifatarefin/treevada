@@ -482,7 +482,8 @@ def coalesce_partial(oracle, trees: List[ParseNode], grammar: Grammar,
         alt_rule_bodies.extend(grammar.rules[nt_to_partially_replace].bodies)
         grammar.rules.pop(full_replacement_nt)
         alt_rule.bodies = alt_rule_bodies
-        grammar.add_rule(alt_rule)
+        depth = grammar.rules[nt_to_partially_replace].depth
+        grammar.add_rule(alt_rule, depth)
         if not partially_replace_on_rhs:
             grammar.rules.pop(nt_to_partially_replace)
         return grammar
@@ -517,9 +518,9 @@ def coalesce_partial(oracle, trees: List[ParseNode], grammar: Grammar,
 
     #################### END HELPERS ########################
 
-    nonterminals = set(grammar.rules.keys())
+    nonterminals = sorted(grammar.rules.items(), key=lambda x: x[1].depth)
+    nonterminals = [x[0] for x in nonterminals]
     nonterminals.remove("start")
-    nonterminals = list(nonterminals)
 
     # Ranging over the nonterminals that need to be fully replaced by the
     # other in the list (other must replace this one at every location)
@@ -613,7 +614,7 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
             #import pickle
             #pickle.dump(coalesce_target, open('overlap-bug.pkl', "wb"))
             #print(f"Oopsie with {coalesce_target}.\nPretty sure this is an overlap bug that I know of.... so let's just skip it")
-            return False, set()
+            return False, []
         #assert (replaced_strings)
 
         replaced_strings = list(dict.fromkeys(replaced_strings))
@@ -629,7 +630,7 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
             try:
                 oracle.parse(s)
             except:
-                return False, set()
+                return False, []
         return True, replaced_strings
 
     def replacement_valid_and_expanding(nt1, nt2, trees: ParseTreeList):
