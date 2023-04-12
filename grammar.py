@@ -116,7 +116,7 @@ class Grammar():
         """
         samples = set()
         attempts = 0
-        while len(samples) < n and attempts < 10*n:
+        while len(samples) < n and attempts < 40*n:
             attempts += 1
             try:
                 sample = self.generate_positive_example(max_depth)

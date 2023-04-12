@@ -4,7 +4,7 @@ from grammar import Rule
 
 def get_grammar_str(f):
 	line = f.readline()
-	while not line.startswith('Initial Grammar Created'): line = f.readline()
+	while not line.startswith('Initial grammar loaded'): line = f.readline()
 	line = f.readline()
 	grammar_str = ''
 	while not line.startswith('Precision set'):
@@ -41,21 +41,26 @@ def compute_stats(grammar):
 	rule_count = 0
 	terminals = set()
 	nonterminals = set()
-
+	rule_length = 0
+	rule_stats = 0
 	for rule_start, rule_obj in grammar.rules.items():
 		nonterminals.add(rule_start)
 		for body in rule_obj.bodies:
 			rule_count += 1
+			rule_length += len(body) if len(body) > 1 else 0
+			rule_stats += 1 if len(body) > 1 else 0
 			for sym in body:
 				if '"' in sym:
 					terminals.add(sym)
 				else:
 					nonterminals.add(sym)
 
-	print('Rules:', rule_count - 1)
-	print('Terms:', len(terminals))
-	print('NTrms:', len(nonterminals) - 1)
-	print('---')
+	# print('Rules:', rule_count - 1)
+	# print('Terms:', len(terminals))
+	# print('NTrms:', len(nonterminals) - 1)
+	# print('---')
+	print(len(nonterminals) - 1, rule_count - 1, len(terminals), (rule_length - 1) / rule_stats)
+	# print((rule_length - 1) / (rule_count - 1))#average rule length
 
 def print_stats(file_name):
 	f = open(file_name, 'r')
@@ -67,7 +72,7 @@ def print_stats(file_name):
 	grammar = Grammar(start_nt)
 	for rule in rules:
 		grammar.add_rule(rule)
-	print(file_name)
+	# print(file_name)
 	compute_stats(grammar)
 
 for file_name in sys.argv[1:]:
