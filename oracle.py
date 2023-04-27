@@ -41,9 +41,10 @@ class ExternalOracle:
         f.write(bytes(string, 'utf-8'))
         f_name = f.name
         f.flush()
+        time_spent = 0
         try:
             # With check = True, throws a CalledProcessError if the exit code is non-zero
-            subprocess.run([self.command, f_name], stdout=FNULL, stderr=FNULL, check=True)#, timeout=timeout)
+            subprocess.run([self.command, f_name], stdout=FNULL, stderr=FNULL, check=True, timeout=100)
             f.close()
             FNULL.close()
             return True
@@ -53,6 +54,7 @@ class ExternalOracle:
             return False
         except subprocess.TimeoutExpired as e:
             print(f"Caused timeout: {string}")
+            print(f"Time spent: {time.time() - time_spent}")
             f.close()
             FNULL.close()
             return True

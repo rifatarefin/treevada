@@ -121,7 +121,7 @@ def group(trees, max_group_size, increment: bool, last_applied_bubble = None) ->
             bubbles.pop(bubble_str)
     print("Number of bubbles: ", len(bubbles))
 
-    bubbles = score_and_sort_bubbles(bubbles, max_group_size)
+    bubbles = score_and_sort_bubbles(bubbles)
 
     # Return the set of repeated groupings as an iterable
     return bubbles
