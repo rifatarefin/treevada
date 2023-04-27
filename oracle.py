@@ -31,7 +31,7 @@ class ExternalOracle:
         self.real_calls = 0
         self.time_spent = 0
 
-    def _parse_internal(self, string, timeout = 3):
+    def _parse_internal(self, string):
         """
         Does the work of calling the subprocess.
         """
@@ -43,7 +43,7 @@ class ExternalOracle:
         f.flush()
         try:
             # With check = True, throws a CalledProcessError if the exit code is non-zero
-            subprocess.run([self.command, f_name], stdout=FNULL, stderr=FNULL, timeout=timeout, check=True)
+            subprocess.run([self.command, f_name], stdout=FNULL, stderr=FNULL, check=True)#, timeout=timeout)
             f.close()
             FNULL.close()
             return True
@@ -69,7 +69,7 @@ class ExternalOracle:
                 raise ParseException(f"doesn't parse: {string}")
         else:
             s = time.time()
-            res = self._parse_internal(string, timeout)
+            res = self._parse_internal(string)
             self.time_spent += time.time() - s
             self.cache_set[string] = res
             if res:

@@ -69,6 +69,8 @@ def group(trees, max_group_size, increment: bool, last_applied_bubble = None) ->
             if increment:
                 inc = max_group_size - 1
             for j in range(i + 1, min(len(children_lst) + 1, i + max_group_size + 1), inc):
+                # if j - i == 2:
+                #     continue
                 tree_sublist = children_lst[i:j]
 
                 # discard a bubble if it's not bracket balanced
@@ -96,6 +98,7 @@ def group(trees, max_group_size, increment: bool, last_applied_bubble = None) ->
                     bubble.add_occurrence()
                     bubble.add_context(lhs_context, rhs_context)
                     bubble.add_source(tree_idx, child_idxs, (i, j-1))
+                    # bubble.set_depth(min(bubble.depth, depth))
 
         # Recurse down in the other layers
         for i, child in enumerate(tree.children):
@@ -118,7 +121,7 @@ def group(trees, max_group_size, increment: bool, last_applied_bubble = None) ->
             bubbles.pop(bubble_str)
     print("Number of bubbles: ", len(bubbles))
 
-    bubbles = score_and_sort_bubbles(bubbles)
+    bubbles = score_and_sort_bubbles(bubbles, max_group_size)
 
     # Return the set of repeated groupings as an iterable
     return bubbles
@@ -137,12 +140,15 @@ def score_and_sort_bubbles(bubbles: Dict[str, Bubble]) -> List[Union[Bubble, Tup
     bubble_pairs = []
 
     for i in range(len(bubble_lst)):
+        first_bubble: Bubble = bubble_lst[i]
+        # Pairs of existing terminals we don't care about, break early because the list is sorted
+        if len(first_bubble.bubbled_elems) == 1:
+            break
         for j in range(i + 1, len(bubble_lst)):
-            first_bubble: Bubble = bubble_lst[i]
             second_bubble: Bubble = bubble_lst[j]
-            # Pairs of existing terminals we don't care about
-            if len(first_bubble.bubbled_elems) == len(second_bubble.bubbled_elems) == 1:
-                continue
+            # Skip recomputing single bubbles
+            # if len(second_bubble.bubbled_elems) == 1 and len(first_bubble.bubbled_elems) < max_group_size:
+            #     continue
             # Skip overlapping/conflicting pairs
             first_prevents_second, second_prevents_first = first_bubble.application_breaks_other(second_bubble)
             if first_prevents_second and second_prevents_first:
@@ -166,16 +172,29 @@ def score_and_sort_bubbles(bubbles: Dict[str, Bubble]) -> List[Union[Bubble, Tup
             # else:
             #     # bracketed = 0
             # bubble_depth = 0 - max(first_bubble.depth, second_bubble.depth)
-            if first_bubble.depth > second_bubble.depth:
+
+            if len(second_bubble.bubbled_elems) == 1:
                 bubble_depth = first_bubble.depth
-                bubble_len = 0 - len(first_bubble.bubbled_elems)
+                bubble_len = - len(first_bubble.bubbled_elems)
             else:
-                bubble_depth = second_bubble.depth
-                bubble_len = 0 - len(second_bubble.bubbled_elems)
+                bubble_depth = (first_bubble.depth + second_bubble.depth) / 2
+                bubble_len = - (len(first_bubble.bubbled_elems) + len(second_bubble.bubbled_elems)) / 2
+            # if first_bubble.depth > second_bubble.depth:
+            #     bubble_depth = first_bubble.depth
+            #     bubble_len = 0 - len(first_bubble.bubbled_elems)
+            # else:
+            #     bubble_depth = second_bubble.depth
+            #     bubble_len = 0 - len(second_bubble.bubbled_elems) if len(second_bubble.bubbled_elems) > 0 else len(first_bubble.bubbled_elems)
+            # else:
+            #     bubble_depth = first_bubble.depth
+            #     bubble_len = 0 - (len(first_bubble.bubbled_elems) + len(second_bubble.bubbled_elems)) / 2
+
+            # bubble_depth = min(first_bubble.depth, second_bubble.depth)
+            # bubble_len = 0 - len(first_bubble.bubbled_elems)
             # If they're partially overlapping, we may need a particular application order.
             if first_prevents_second:
                 # need to invert the order of these, so we try all bubbles...
-                bubble_pairs.append(((similarity, bubble_depth, commonness, bubble_len), (second_bubble, first_bubble)))
+                bubble_pairs.append(((similarity, bubble_depth, commonness, bubble_len), (second_bubble, first_bubble)))#similarity
             else:
                 # either they don't conflict, or we can still do second after we apply first
                 bubble_pairs.append(((similarity, bubble_depth, commonness, bubble_len), (first_bubble, second_bubble)))

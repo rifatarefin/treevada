@@ -123,7 +123,7 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]], bracket_items: List, 
               / /\ \
               { b c }
         """
-        
+
         children = []
         if root == False:
             
@@ -143,7 +143,7 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]], bracket_items: List, 
             else:
                 children.append(ParseNode(get_class[token], False, [node]))
             index+=1
-
+        bracket_items.append(len(children))
         return ParseNode(START, False, children)
 
     
@@ -169,12 +169,12 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]], bracket_items: List, 
 
         # new_tree = ParseNode(START, False, new_children)
         trees.append(new_children)
-    if len(bracket_items) > 0 and sum(bracket_items)/len(bracket_items) < 8:
+    avg_bracket_items = sum(bracket_items)/len(bracket_items) if len(bracket_items) > 0 else len(bracket_items)
+    print(f"Average items in brackets: {avg_bracket_items}")
+    if avg_bracket_items < 10:
         global GROUP_INCREMENT, MIN_GROUP_LEN
-        MIN_GROUP_LEN = 2
+        # MIN_GROUP_LEN = 2
         GROUP_INCREMENT = True
-        print("Average number of elements in a bracket: ", sum(bracket_items)/len(bracket_items))
-
     return trees
 
 
@@ -338,7 +338,7 @@ def build_trees(oracle, leaves):
     s = time.time()
     # Main algorithm loop. Iteratively increase the length of groups allowed from MIN_GROUP_LEN to MAX_GROUP_LEN
     # break the group_size loop if no valid merge after increasing group size by threshold
-    threshold = 5
+    threshold = 3
     for group_size in range(MIN_GROUP_LEN, MAX_GROUP_LEN):
 
         count = 1
@@ -404,7 +404,7 @@ def build_trees(oracle, leaves):
                                 # bubble.new_nt = allocate_tid()
                                 
                         updated = True
-                        threshold = 6
+                        threshold = 5
                     else:
                         reapply = False
                 if updated:
