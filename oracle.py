@@ -43,7 +43,7 @@ class ExternalOracle:
         f.flush()
         try:
             # With check = True, throws a CalledProcessError if the exit code is non-zero
-            subprocess.run([self.command, f_name], stdout=FNULL, stderr=FNULL, check=True)#, timeout=timeout)
+            subprocess.run([self.command, f_name], stdout=FNULL, stderr=FNULL, check=True)#, timeout=10)
             f.close()
             FNULL.close()
             return True

@@ -338,7 +338,7 @@ def build_trees(oracle, leaves):
     s = time.time()
     # Main algorithm loop. Iteratively increase the length of groups allowed from MIN_GROUP_LEN to MAX_GROUP_LEN
     # break the group_size loop if no valid merge after increasing group size by threshold
-    threshold = 3
+    threshold = 5
     for group_size in range(MIN_GROUP_LEN, MAX_GROUP_LEN):
 
         count = 1
