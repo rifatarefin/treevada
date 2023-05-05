@@ -83,7 +83,7 @@ def main(oracle_cmd, guide_examples_folder,  log_file_name):
 
     guide_examples = []
     raw_examples = []
-    for filename in os.listdir(guide_examples_folder):
+    for filename in sorted(os.listdir(guide_examples_folder)):
         full_filename = os.path.join(guide_examples_folder, filename)
         guide_raw = open(full_filename).read()
         raw_examples.append(guide_raw)
