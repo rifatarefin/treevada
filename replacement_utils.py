@@ -301,7 +301,7 @@ def get_all_rule_replacement_strs(tree: ParseNode, replacee_rule: Tuple[str, Lis
     else:
         ret_list = [''.join(p) for p in itertools.product(*strings_per_child)]
 
-    return list(set(ret_list))
+    return list(dict.fromkeys(ret_list))
 
 def get_strings_with_replacement(tree: ParseNode, nt_to_replace: str, replacement_strs: List[str]):
     """
