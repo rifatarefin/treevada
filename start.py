@@ -173,7 +173,6 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]], bracket_items: List, 
     print(f"Average items in brackets: {avg_bracket_items}")
     if avg_bracket_items < 10:
         global GROUP_INCREMENT, MIN_GROUP_LEN
-        # MIN_GROUP_LEN = 2
         GROUP_INCREMENT = True
     return trees
 
