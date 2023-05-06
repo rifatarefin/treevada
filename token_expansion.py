@@ -131,8 +131,8 @@ def generalize_whitespace_in_rule(oracle: ExternalOracle, grammar: Grammar, tree
 
     existing_bodies = [fixup_terminal(body[0]) for idx, body in enumerate(grammar.rules[rule_start].bodies) if idx in body_idxs]
 
-    ok_chars = set([c for body in existing_bodies for c in body])
-    other_chars = set([c for c in string.whitespace if c not in ok_chars])
+    ok_chars = dict.fromkeys([c for body in existing_bodies for c in body])
+    other_chars = dict.fromkeys([c for c in string.whitespace if c not in ok_chars])
 
     for c in other_chars:
         c_ok = True

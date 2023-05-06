@@ -20,7 +20,7 @@ GROUP_PUNCTUATION = False
 SPLIT_UPPER_AND_LOWER = True
 quote = []
 def approx_tokenize(guide_raw:str):
-    def get_category(c):
+    def get_category(c, idx):
         # everything surrounded by quote is grouped
         if len(quote)==1:
             if c == quote[0]:
@@ -29,7 +29,9 @@ def approx_tokenize(guide_raw:str):
             else:
                 return "LETTER"
         if c=="\"" or c=="\'":
-            quote.append(c)
+            # don't group if there is no matching quote
+            if c in guide_raw[idx+1:]:
+                quote.append(c)
             return None
         if not SPLIT_UPPER_AND_LOWER and c in string.ascii_letters:
             return "LETTER"
@@ -49,8 +51,8 @@ def approx_tokenize(guide_raw:str):
     cur_token = ""
     start = True
     tokens = []
-    for c in guide_raw:
-        cur_category = get_category(c)
+    for i, c in enumerate(guide_raw):
+        cur_category = get_category(c, i)
         if cur_category is not None and cur_category == prev_category:
             cur_token += c
         else:
@@ -110,9 +112,8 @@ def main(oracle_cmd, guide_examples_folder,  log_file_name):
         else:
             guide = [ParseNode(c, True, []) for c in guide_raw]
         guide_examples.append(guide)
-
     has_bracket = sum([1 for g in raw_examples if "(" in g or ")" in g
-                       or "[" in g or "]" in g or "{" in g or "}" in g
+                       or "[" in g or "]" in g 
                        or "{" in g or "}" in g])
     has_quote = sum([1 for g in raw_examples if "\"" in g or "'" in g])
     average_guide_len = sum([len(g) for g in raw_examples])/len(raw_examples)
