@@ -36,7 +36,7 @@ Bulk of the Arvada algorithm.
 MAX_SAMPLES_PER_COALESCE = 50
 MIN_GROUP_LEN = 3
 MAX_GROUP_LEN = 10
-GROUP_INCREMENT = False
+
 MUST_EXPAND_IN_COALESCE = False
 MUST_EXPAND_IN_PARTIAL= False
 
@@ -103,7 +103,7 @@ def build_start_grammar(oracle, leaves, bbl_bounds = (3,10)):
     return grammar
 
 
-def build_naive_parse_trees(leaves: List[List[ParseNode]], bracket_items: List, oracle: ExternalOracle):
+def build_naive_parse_trees(leaves: List[List[ParseNode]], oracle: ExternalOracle):
     """
     Builds naive parse trees for each leaf in `leaves`, assigning each unique
     character to its own nonterminal, and uniting them all under the START
@@ -138,12 +138,10 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]], bracket_items: List, 
                 children.append(child)
             elif token == "}" or token == "]" or token == ")":
                 children.append(ParseNode(get_class[token], False, [node]))
-                bracket_items.append(len(children)-2)
                 return ParseNode(allocate_tid(), False, children), index
             else:
                 children.append(ParseNode(get_class[token], False, [node]))
             index+=1
-        bracket_items.append(len(children))
         return ParseNode(START, False, children)
 
     
@@ -169,12 +167,7 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]], bracket_items: List, 
 
         # new_tree = ParseNode(START, False, new_children)
         trees.append(new_children)
-    avg_bracket_items = sum(bracket_items)/len(bracket_items) if len(bracket_items) > 0 else len(bracket_items)
-    print(f"Average items in brackets: {avg_bracket_items}")
-    if avg_bracket_items < 10:
-        global GROUP_INCREMENT, MIN_GROUP_LEN
-        # MIN_GROUP_LEN = 2
-        GROUP_INCREMENT = True
+
     return trees
 
 
@@ -320,7 +313,7 @@ def build_trees(oracle, leaves):
             return 0, trees, {}
 
 
-    best_trees = build_naive_parse_trees(leaves, [], oracle)
+    best_trees = build_naive_parse_trees(leaves, oracle)
     grammar = build_grammar(best_trees)
     s = time.time()
     print("Beginning coalescing...".ljust(50))
@@ -339,7 +332,7 @@ def build_trees(oracle, leaves):
         updated = True
         while updated:
             group_start = time.time()
-            all_groupings = group(best_trees, group_size, GROUP_INCREMENT)
+            all_groupings = group(best_trees, group_size)
             TIME_GROUPING += time.time() - group_start
             updated, nlg = False, len(all_groupings)
             for i, (grouping, the_score) in enumerate(all_groupings):

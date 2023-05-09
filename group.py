@@ -17,13 +17,13 @@ def is_balanced(tokens: str):
         close_list = ["]","}",")"]
         stack = []
         quote = []
-        for i in tokens:
+        for idx, i in enumerate(tokens):
             if len(quote) == 1:
                 if i == quote[0]:
                     quote.pop()
                 continue
 
-            if i == "\"" or i == "\'":
+            if (i == "\"" or i == "\'") and i in tokens[idx+1:]:
                 quote.append(i)
             elif i in open_list:
                 stack.append(i)
@@ -37,7 +37,7 @@ def is_balanced(tokens: str):
             return True
         return False
 
-def group(trees, max_group_size, increment: bool, last_applied_bubble = None) -> List[Bubble]:
+def group(trees, max_group_size, last_applied_bubble = None) -> List[Bubble]:
     """
     TREES is a set of ParseNodes.
 
@@ -60,10 +60,7 @@ def group(trees, max_group_size, increment: bool, last_applied_bubble = None) ->
         #     return
 
         for i in range(len(children_lst)):
-            inc = 1
-            if increment:
-                inc = max_group_size - 1
-            for j in range(i + 1, min(len(children_lst) + 1, i + max_group_size + 1), inc):
+            for j in range(i + 1, min(len(children_lst) + 1, i + max_group_size + 1)):
                 tree_sublist = children_lst[i:j]
                 tree_substr = ''.join([t.payload for t in tree_sublist])
                 if i == 0 and j == len(children_lst):
