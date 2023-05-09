@@ -398,7 +398,7 @@ def build_trees(oracle, leaves):
                                 # bubble.new_nt = allocate_tid()
                                 
                         updated = True
-                        threshold = 6
+                        threshold = 5
                     else:
                         reapply = False
                 if updated:
