@@ -17,13 +17,13 @@ def is_balanced(tokens: str):
         close_list = ["]","}",")"]
         stack = []
         quote = []
-        for i in tokens:
+        for idx, i in enumerate(tokens):
             if len(quote) == 1:
                 if i == quote[0]:
                     quote.pop()
                 continue
 
-            if i == "\"" or i == "\'":
+            if (i == "\"" or i == "\'") and i in tokens[idx+1:]:
                 quote.append(i)
             elif i in open_list:
                 stack.append(i)
