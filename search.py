@@ -70,7 +70,7 @@ def main_internal(external_folder, log_file, random_guides=False):
     if random_guides:
         guide_folder = os.path.join(external_folder, "random-guides")
     else:
-        guide_folder = os.path.join(external_folder, "guides")
+        guide_folder = os.path.join(external_folder, "guide-big")
     parser_command = os.path.join(external_folder, f"parse_{bench_name}")
 
     main(parser_command, guide_folder, log_file)
