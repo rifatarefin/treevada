@@ -389,7 +389,7 @@ def expand_tokens(oracle : ExternalOracle, grammar : Grammar, trees: List[ParseN
 
         for body_idx in sorted(idxs_to_replace, reverse = True):
             rule.bodies.pop(body_idx)
-        for nt_name in bodies_to_add:
+        for nt_name in sorted(bodies_to_add):
             rule.add_body([nt_name])
             rs_to_add = rules_to_add(nt_name)
             for r_to_add in rs_to_add:
