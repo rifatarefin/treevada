@@ -131,8 +131,8 @@ def generalize_whitespace_in_rule(oracle: ExternalOracle, grammar: Grammar, tree
 
     existing_bodies = [fixup_terminal(body[0]) for idx, body in enumerate(grammar.rules[rule_start].bodies) if idx in body_idxs]
 
-    ok_chars = set([c for body in existing_bodies for c in body])
-    other_chars = set([c for c in string.whitespace if c not in ok_chars])
+    ok_chars = dict.fromkeys([c for body in existing_bodies for c in body])
+    other_chars = dict.fromkeys([c for c in string.whitespace if c not in ok_chars])
 
     for c in other_chars:
         c_ok = True
@@ -389,7 +389,7 @@ def expand_tokens(oracle : ExternalOracle, grammar : Grammar, trees: List[ParseN
 
         for body_idx in sorted(idxs_to_replace, reverse = True):
             rule.bodies.pop(body_idx)
-        for nt_name in bodies_to_add:
+        for nt_name in sorted(bodies_to_add):
             rule.add_body([nt_name])
             rs_to_add = rules_to_add(nt_name)
             for r_to_add in rs_to_add:
