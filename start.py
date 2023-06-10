@@ -36,7 +36,6 @@ Bulk of the Arvada algorithm.
 MAX_SAMPLES_PER_COALESCE = 50
 MIN_GROUP_LEN = 3
 MAX_GROUP_LEN = 10
-GROUP_INCREMENT = True
 MUST_EXPAND_IN_COALESCE = False
 MUST_EXPAND_IN_PARTIAL= False
 
@@ -91,7 +90,7 @@ def build_start_grammar(oracle, leaves, bbl_bounds = (3,10)):
     print('Coalescing nonterminals...'.ljust(50), end='\r')
     s = time.time()
     grammar, new_trees, coalesce_caused, _ = coalesce(oracle, trees, grammar)
-    grammar, new_trees, partial_coalesces = coalesce_partial(oracle, new_trees, grammar)
+    # grammar, new_trees, partial_coalesces = coalesce_partial(oracle, new_trees, grammar)
     LAST_COALESCE_TIME += time.time() - s
     s = time.time()
     grammar = expand_tokens(oracle, grammar, new_trees)
@@ -299,11 +298,11 @@ def build_trees(oracle, leaves):
         grammar = build_grammar(trees)
 
         grammar, new_trees, coalesce_caused, coalesced_into = coalesce(oracle, trees, grammar, new_bubble)
-        if not coalesce_caused and not isinstance(new_bubble, tuple):
-            grammar, new_trees, partial_coalesces = coalesce_partial(oracle, trees, grammar, new_bubble)
-            if partial_coalesces:
-                print("\n(partial)")
-                coalesce_caused = True
+        # if not coalesce_caused and not isinstance(new_bubble, tuple):
+        #     grammar, new_trees, partial_coalesces = coalesce_partial(oracle, trees, grammar, new_bubble)
+        #     if partial_coalesces:
+        #         print("\n(partial)")
+        #         coalesce_caused = True
 
         # grammar = minimize(grammar)
         new_size = grammar.size()
@@ -318,7 +317,7 @@ def build_trees(oracle, leaves):
     s = time.time()
     print("Beginning coalescing...".ljust(50))
     grammar, best_trees, _, _ = coalesce(oracle, best_trees, grammar)
-    grammar, best_trees, _ = coalesce_partial(oracle, best_trees, grammar)
+    # grammar, best_trees, _ = coalesce_partial(oracle, best_trees, grammar)
     ORIGINAL_COALESCE_TIME += time.time() - s
 
 
@@ -332,7 +331,7 @@ def build_trees(oracle, leaves):
         updated = True
         while updated:
             group_start = time.time()
-            all_groupings = group(best_trees, group_size, GROUP_INCREMENT)
+            all_groupings = group(best_trees, group_size)
             TIME_GROUPING += time.time() - group_start
             updated, nlg = False, len(all_groupings)
             for i, (grouping, the_score) in enumerate(all_groupings):
