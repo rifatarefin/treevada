@@ -18,7 +18,7 @@ from next_tid import allocate_tid
 Bulk of the Arvada algorithm.
 """
 
-###################### Settings for ASE'21 Submission #########################
+###################### Settings for ICSE'24 Submission #########################
 # MAX_SAMPLES_PER_COALESCE = 50   << number of strings to sample from the     #
 #                                   grammar induced by a marge. Increase to   #
 #                                   increase chance of catching unsound       #
@@ -126,9 +126,12 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]], bracket_items: List, 
 
         children = []
         if root == False:
-            
             children.append(ParseNode(get_class[leaves[index].payload], False, [leaves[index]]))
             index+=1
+        else:
+            nonlocal bracket_items
+            bracket_items = []
+
         while index<len(leaves):
             node = leaves[index]
             token = node.payload
@@ -138,26 +141,29 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]], bracket_items: List, 
                 children.append(child)
             elif token == "}" or token == "]" or token == ")":
                 children.append(ParseNode(get_class[token], False, [node]))
-                bracket_items.append(len(children)-2)
+                bracket_items.append(len(children))
                 return ParseNode(allocate_tid(), False, children), index
             else:
                 children.append(ParseNode(get_class[token], False, [node]))
             index+=1
         bracket_items.append(len(children))
-        return ParseNode(START, False, children)
+        return ParseNode(START, False, children), bracket_items.copy()
 
     
     # trees = [ParseNode(START, False, [ParseNode(get_class[leaf.payload], False, [leaf]) for leaf in leaf_lst])
     #          for leaf_lst in leaves]
     trees=[]
+    norm_brackets=[]
+    norm_bracket_lengths=[]
+    str_lengths = []
     for leaf_list in leaves:
         leaf_str = ''.join([leaf.payload for leaf in leaf_list])
         if is_balanced(leaf_str):
-            new_children = braces_tree(leaf_list, index = 0, root= True)
+            new_children, brackets = braces_tree(leaf_list, index = 0, root= True)
         else:
             print("Flat tree")
             new_children = ParseNode(START, False, [ParseNode(get_class[leaf.payload], False, [leaf]) for leaf in leaf_list])
-
+            brackets = [len(new_children.children)]
         new_children.update_cache_info()
         try:
             
@@ -169,11 +175,18 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]], bracket_items: List, 
 
         # new_tree = ParseNode(START, False, new_children)
         trees.append(new_children)
-    avg_bracket_items = sum(bracket_items)/len(bracket_items) if len(bracket_items) > 0 else len(bracket_items)
-    print(f"Average items in brackets: {avg_bracket_items}")
-    if avg_bracket_items < 10:
-        global GROUP_INCREMENT, MIN_GROUP_LEN
-        GROUP_INCREMENT = True
+        norm_brackets.append(len(brackets))
+        norm_bracket_lengths.append(sum(brackets)/len(brackets))
+        str_lengths.append(len(leaf_list))
+
+    avg_brackets = sum(norm_brackets)/len(norm_brackets)
+    avg_bracket_lengths = sum(norm_bracket_lengths)/len(norm_bracket_lengths)
+    avg_n = sum(str_lengths)/len(str_lengths)
+    print(f"Average number of brackets(normalized): {avg_brackets}")
+    print(f"Average lengths of brackets(normalized): {avg_bracket_lengths}")
+    print(f"Average n: {avg_n}")
+
+
     return trees
 
 

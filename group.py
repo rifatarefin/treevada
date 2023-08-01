@@ -98,7 +98,7 @@ def group(trees, max_group_size, increment: bool, last_applied_bubble = None) ->
                     bubble.add_occurrence()
                     bubble.add_context(lhs_context, rhs_context)
                     bubble.add_source(tree_idx, child_idxs, (i, j-1))
-                    # bubble.set_depth(min(bubble.depth, depth))
+                    bubble.set_depth(min(bubble.depth, depth))
 
         # Recurse down in the other layers
         for i, child in enumerate(tree.children):

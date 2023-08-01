@@ -68,10 +68,9 @@ def main(oracle_cmd, log_file_name, test_examples_folder ):
             print(learned_grammar, file=f)
             exit()
 
-        precision_set = learned_grammar.sample_positives(PRECISION_SIZE, 5)
         parser: Lark = learned_grammar.parser()
+        precision_set = learned_grammar.sample_positives(PRECISION_SIZE, 5)
 
-        example_gen_time = time.time()
         num_precision_parsed = 0
 
         print(f"Precision set (size {len(precision_set)}):", file=f)
@@ -86,6 +85,7 @@ def main(oracle_cmd, log_file_name, test_examples_folder ):
                 print("Failed", example, " <----- FAILURE", file=f)
                 continue
 
+        example_gen_time = time.time()
         num_recall_parsed = 0
 
         if real_recall_set is not None:

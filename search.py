@@ -98,6 +98,9 @@ def main(oracle_cmd, guide_examples_folder,  log_file_name):
     for filename in sorted(os.listdir(guide_examples_folder)):
         full_filename = os.path.join(guide_examples_folder, filename)
         guide_raw = open(full_filename).read()
+        # skip empty seeds
+        if not guide_raw:
+            continue
         raw_examples.append(guide_raw)
         try:
             
