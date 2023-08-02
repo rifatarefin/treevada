@@ -3,7 +3,7 @@ The ground truth grammar in this example is the following:
 S -> E
 E -> p E p | E o E | n
 ```
-Since this grammar consists solely of lowercase characters, Arvada will fail to learn it if run pretokenization. Add the --no-pretokenize flag to learn the ground truth grammar.
+Since this grammar consists solely of lowercase characters, TreeVada will fail to learn it if run pretokenization. Add the --no-pretokenize flag to learn the ground truth grammar.
 
 First, test that the oracle program runs without error on the training examples:
 ```

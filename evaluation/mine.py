@@ -48,8 +48,8 @@ def compute_stats(grammar):
 		for body in rule_obj.bodies:
 			rule_count += 1
 			# print(len(body))
-			rule_length += len(body) if len(body) > 1 else 0
-			rule_stats += 1 if len(body) > 1 else 0
+			rule_length += len(body) #if len(body) > 1 else 0
+			# rule_stats += 1 if len(body) > 1 else 0
 			for sym in body:
 				if '"' in sym:
 					terminals.add(sym)
@@ -60,7 +60,7 @@ def compute_stats(grammar):
 	# print('Rules:', rule_count - 1)
 	# print('Terms:', len(terminals))
 	# print('---')
-	print(len(nonterminals) - 1, rule_count - 1, (rule_length - 1) / rule_stats, rule_length - 1, len(terminals))
+	print(len(nonterminals) - 1, rule_count - 1, (rule_length - 1) / (rule_count - 1), rule_length - 1, len(terminals))
 	# print((rule_length - 1) / rule_stats)#average rule length
 
 def print_stats(file_name):
