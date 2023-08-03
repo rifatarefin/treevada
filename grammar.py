@@ -123,6 +123,7 @@ class Grammar():
             attempts += 1
             try:
                 sample = self.generate_positive_example(max_depth)
+                # we blindly consider strings of all lengths
                 # if len(sample) > 300:
                 #     continue
                 samples.add(sample)
