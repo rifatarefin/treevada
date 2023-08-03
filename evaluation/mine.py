@@ -47,20 +47,21 @@ def compute_stats(grammar):
 		nonterminals.add(rule_start)
 		for body in rule_obj.bodies:
 			rule_count += 1
-			rule_length += len(body) if len(body) > 1 else 0
-			rule_stats += 1 if len(body) > 1 else 0
+			# print(len(body))
+			rule_length += len(body) #if len(body) > 1 else 0
+			# rule_stats += 1 if len(body) > 1 else 0
 			for sym in body:
 				if '"' in sym:
 					terminals.add(sym)
 				else:
 					nonterminals.add(sym)
 
+	# print('NTrms:', len(nonterminals) - 1)
 	# print('Rules:', rule_count - 1)
 	# print('Terms:', len(terminals))
-	# print('NTrms:', len(nonterminals) - 1)
 	# print('---')
-	print(len(nonterminals) - 1, rule_count - 1, len(terminals), (rule_length - 1) / rule_stats)
-	# print((rule_length - 1) / (rule_count - 1))#average rule length
+	print(len(nonterminals) - 1, rule_count - 1, (rule_length - 1) / (rule_count - 1), rule_length - 1, len(terminals))
+	# print((rule_length - 1) / rule_stats)#average rule length
 
 def print_stats(file_name):
 	f = open(file_name, 'r')

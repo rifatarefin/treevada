@@ -21,3 +21,7 @@ micro-benchmarks/
 *.txt
 *.xlsx
 .vscode/*
+slog*
+tlog*
+runmicro*
+runls6*
