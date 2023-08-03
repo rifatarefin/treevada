@@ -25,7 +25,7 @@ def is_balanced(tokens: str):
                     quote.pop()
                 continue
 
-            if (i == "\"" or i == "\'") and i in tokens[idx+1:]:
+            if (i == "\"" or i == "\'") and i in tokens[idx+1:]:    #there is another matching quote following
                 quote.append(i)
             elif i in open_list:
                 stack.append(i)
@@ -163,34 +163,14 @@ def score_and_sort_bubbles(bubbles: Dict[str, Bubble]) -> List[Union[Bubble, Tup
                 commonness = sum([v for v in first_bubble.contexts.values()]) / 2 + sum(
                     [v for v in second_bubble.contexts.values()]) / 2
 
-            # first_str = ''.join([child.derived_string() for child in first_bubble.bubbled_elems])
-            # second_str = ''.join([child.derived_string() for child in second_bubble.bubbled_elems])
-            # if not is_balanced(first_str) or not is_balanced(second_str):
-            #     continue
-            # elif not (is_balanced(first_str) or is_balanced(second_str)):
-            #     bracketed =1
-            # else:
-            #     # bracketed = 0
-            # bubble_depth = 0 - max(first_bubble.depth, second_bubble.depth)
-
+            
             if len(second_bubble.bubbled_elems) == 1:
                 bubble_depth = first_bubble.depth
                 bubble_len = - len(first_bubble.bubbled_elems)
             else:
                 bubble_depth = (first_bubble.depth + second_bubble.depth) / 2
                 bubble_len = - (len(first_bubble.bubbled_elems) + len(second_bubble.bubbled_elems)) / 2
-            # if first_bubble.depth > second_bubble.depth:
-            #     bubble_depth = first_bubble.depth
-            #     bubble_len = 0 - len(first_bubble.bubbled_elems)
-            # else:
-            #     bubble_depth = second_bubble.depth
-            #     bubble_len = 0 - len(second_bubble.bubbled_elems) if len(second_bubble.bubbled_elems) > 0 else len(first_bubble.bubbled_elems)
-            # else:
-            #     bubble_depth = first_bubble.depth
-            #     bubble_len = 0 - (len(first_bubble.bubbled_elems) + len(second_bubble.bubbled_elems)) / 2
-
-            # bubble_depth = min(first_bubble.depth, second_bubble.depth)
-            # bubble_len = 0 - len(first_bubble.bubbled_elems)
+            
             # If they're partially overlapping, we may need a particular application order.
             if first_prevents_second:
                 # need to invert the order of these, so we try all bubbles...
@@ -217,4 +197,3 @@ def score_and_sort_bubbles(bubbles: Dict[str, Bubble]) -> List[Union[Bubble, Tup
         bubbles = bubbles[:100]
     # random.shuffle(bubbles)
     return bubbles
-    # return partial_shuffle(bubbles, 50)

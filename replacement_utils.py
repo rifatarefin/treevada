@@ -142,6 +142,7 @@ def lvl_n_derivable(trees, target_nt, n, max_samples=1000):
     >>> lvl_n_derivable([tree_1, tree_2], 't0', 2)
     ['3', '(3)', '((3))', '(((3)))']
     """
+    # switching from set() to list() for deterministic order of elements
     ret_strs = []
     for tree in trees:
         def process_tree(tree: ParseNode):

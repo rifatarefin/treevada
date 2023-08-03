@@ -182,8 +182,8 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]], bracket_items: List, 
     avg_brackets = sum(norm_brackets)/len(norm_brackets)
     avg_bracket_lengths = sum(norm_bracket_lengths)/len(norm_bracket_lengths)
     avg_n = sum(str_lengths)/len(str_lengths)
-    print(f"Average number of brackets(normalized): {avg_brackets}")
-    print(f"Average lengths of brackets(normalized): {avg_bracket_lengths}")
+    print(f"Average number of brackets(not normalized): {avg_brackets}")
+    print(f"Average lengths of brackets(not normalized): {avg_bracket_lengths}")
     print(f"Average n: {avg_n}")
 
 
@@ -696,6 +696,7 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
         """
         Returns true if every string derivable from `replacee` in `trees` can be replaced
         by every string in `replacer_derivable_strings`
+        **Replacing set() as it doesn't preserve the order. We want to get rid of all non-determinism.
         """
 
         # Get the set of positive examples with strings derivable from replacer
@@ -837,18 +838,9 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
             new_grammar.add_rule(rule, max_depth)
         return new_grammar
 
-    # height of the tree for reverse order traversal
-    def get_height(treeNode: ParseNode):
-        if treeNode.is_terminal:
-            return 1
-        max_height = -1
-        for i in treeNode.children:
-            max_height = max(max_height,get_height(i))
-        return max_height + 1
-
-    
     # Define helpful data structures
     # nonterminals = list(dict.fromkeys(grammar.rules.keys()))
+    # store non-terminals depth-wise across all trees
     nonterminals = sorted(grammar.rules.items(), key=lambda x: x[1].depth)
     nonterminals = [x[0] for x in nonterminals]
     nonterminals.remove("start")
@@ -910,10 +902,7 @@ def coalesce(oracle, trees: List[ParseNode], grammar: Grammar,
             coalesce_caused = True
             merges += 1
     trees = tree_list.inner_list
-    # prune tree 
-    # if coalesce_caused:
-    #     prune_tree(trees)
-    # grammar = build_grammar(trees)
+
     return grammar, trees, coalesce_caused, coalesced_into
 
 
