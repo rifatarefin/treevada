@@ -1,4 +1,7 @@
-**TreeVada** is a grammar inference tool, based on the prior work [Arvada](https://github.com/neil-kulkarni/arvada).
+**TreeVada** is a grammar inference tool, based on the prior work [Arvada](https://github.com/neil-kulkarni/arvada). 
+
+## Reproducibility
+The seed programs and ablation studies are available [here](https://figshare.com/s/6492f8c54f396a437830)
 ## Building
 
 Requires at least python 3.7. Install the following two packages via pip to make sure everything runs:
@@ -33,7 +36,8 @@ $ python3 eval.py external [-n PRECISION_SET_SIZE] ORACLE_CMD TRAIN_DIR LOG_FILE
 The Recall should be 1.0 in this case.
 
 
-## Reproducing the Ablation Studies
+
+<!-- ## Reproducing the Ablation Studies
 
 Switch to the specific branch for a particular study
 
@@ -43,7 +47,7 @@ Switch to the specific branch for a particular study
 | Deterministic version of Arvada   | `deterministic-replication`|
 | Re-apply learned rules   | `reapply-deterministic` |
 | Initial bracket-based trees   | `tree-all-bubble` |
-| No partial merge   | `reapply-tree` |
+| No partial merge   | `reapply-tree` | -->
 
 
 
