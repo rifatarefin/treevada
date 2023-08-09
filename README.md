@@ -1,7 +1,7 @@
 **TreeVada** is a grammar inference tool, based on the prior work [Arvada](https://github.com/neil-kulkarni/arvada). 
 
 ## Reproducibility
-The seed programs and ablation studies are available [here](https://figshare.com/s/6492f8c54f396a437830)
+The seed programs and ablation studies are available [here](https://figshare.com/s/6492f8c54f396a437830).
 ## Building
 
 Requires at least python 3.7. Install the following two packages via pip to make sure everything runs:
@@ -12,12 +12,14 @@ $ pip3 install tqdm
 
 ## Running TreeVada
 
-Suppose you have a directory containing a set of examples, `TRAIN_DIR`, and an oracle for a valid example, `ORACLE_CMD`. The restrictions on `ORACLE_CMD` are as follows:
+TreeVada follows the same file structure as Arvada, running TreeVada is analogous to running Arvada. The following instructions are taken from the Arvada repo.
+
+ Suppose you have a directory containing a set of examples, `TRAIN_DIR`, and an oracle for a valid example, `ORACLE_CMD`. The restrictions on `ORACLE_CMD` are as follows:
 
 - `ORACLE_CMD filename` should run the oracle on the file with name `filename`
 - `ORACLE_CMD filename` should return 0 if the example in `filename` is valid, and an exit code greater than 0 if it is invalid. 
 
-You can then run Arvada via:
+You can then run TreeVada via:
 ```
 $ python3 search.py external ORACLE_CMD TRAIN_DIR LOG_FILE
 ```
