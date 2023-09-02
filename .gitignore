@@ -18,6 +18,7 @@ nodejs/
 tinyc/
 curl/
 micro-benchmarks/
+Exception/
 *.txt
 *.xlsx
 .vscode/*

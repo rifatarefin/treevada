@@ -2,7 +2,8 @@ import time
 from lark import Lark
 import tempfile
 import subprocess
-import os
+import os, shutil, io
+import matlab.engine
 
 """
 This file gives  classes to use as "Oracles" in the Arvada algorithm.
@@ -19,43 +20,77 @@ class ExternalOracle:
     we conservatively assume the oracle returns True.
     """
 
-    def __init__(self, command):
+    def __init__(self):
         """
         `command` is a string representing the oracle command, i.e. `command` = "readpng"
         in the oracle call:
             $ readpng <MY_FILE>
         """
-        self.command = command
+        self.eng = matlab.engine.start_matlab()
+        self.eng.warning('off', 'all', nargout = 0)
         self.cache_set = {}
         self.parse_calls = 0
         self.real_calls = 0
         self.time_spent = 0
+    
+    def close(self):
+        if self.eng:
+            self.eng.quit()
 
     def _parse_internal(self, string):
         """
         Does the work of calling the subprocess.
         """
         self.real_calls +=1
-        FNULL = open(os.devnull, 'w')
-        f = tempfile.NamedTemporaryFile()
+        FNULL = io.StringIO()
+        f = tempfile.NamedTemporaryFile(suffix='.mdl')
         f.write(bytes(string, 'utf-8'))
         f_name = f.name
         f.flush()
         try:
             # With check = True, throws a CalledProcessError if the exit code is non-zero
-            subprocess.run([self.command, f_name], stdout=FNULL, stderr=FNULL, check=True)#, timeout=10)
-            f.close()
-            FNULL.close()
-            return True
-        except subprocess.CalledProcessError as e:
-            f.close()
-            FNULL.close()
+            # subprocess.run([self.command, f_name], stdout=FNULL, stderr=FNULL, check=True)#, timeout=10)
+            model = self.eng.load_system(f_name, stderr = FNULL)
+            # model = self.eng.bdroot()
+
+            try :
+                self.eng.slreportgen.utils.compileModel(model, nargout = 0, stderr = FNULL)
+
+                try:
+                    self.eng.slreportgen.utils.uncompileModel(model, nargout = 0, stderr = FNULL)
+                except:
+                    # print("doesn't uncompile")
+                    shutil.copy2(f_name, './Exception/Uncompile')
+                    return False
+            
+            except:
+                # print("doesn't compile")
+                shutil.copy2(f_name, './Exception/Compile')
+                return False
+
+            try:
+                self.eng.close_system(model, nargout = 0, stderr = FNULL)
+                return True
+            
+            except:
+                # print("doesn't close")
+                shutil.copy2(f_name, './Exception/Close')
+                return False
+                
+        except:
+            # print(f"doesn't load {f_name}")
+            shutil.copy2(f_name, './Exception/Load')
             return False
-        except subprocess.TimeoutExpired as e:
-            print(f"Caused timeout: {string}")
+        
+        finally:
+
             f.close()
             FNULL.close()
-            return True
+            if not self.eng:
+                print("restart matlab")
+                self.eng = matlab.engine.start_matlab()
+                self.eng.warning('off', 'all', nargout = 0)
+
 
     def parse(self, string, timeout=3):
         """

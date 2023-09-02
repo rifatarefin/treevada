@@ -17,7 +17,7 @@ See __main__ dispatch at the bottom for usage.
 USE_PRETOKENIZATION = True
 
 GROUP_PUNCTUATION = False
-SPLIT_UPPER_AND_LOWER = True
+SPLIT_UPPER_AND_LOWER = False
 quote = []
 def approx_tokenize(guide_raw:str):
     def get_category(c, idx):
@@ -88,8 +88,8 @@ def main_internal(external_folder, log_file, random_guides=False):
     main(parser_command, guide_folder, log_file)
 
 
-def main(oracle_cmd, guide_examples_folder,  log_file_name):
-    oracle = ExternalOracle(oracle_cmd)
+def main(guide_examples_folder,  log_file_name):
+    oracle = ExternalOracle()
     if USE_PRETOKENIZATION:
        print("Using approximate pre-tokenization stage")
 
@@ -127,7 +127,7 @@ def main(oracle_cmd, guide_examples_folder,  log_file_name):
     print(f"Average token length: {average_token_len}, max token length: {max_token_len}")
     print(f"Guides with brackets: {has_bracket}, quotes: {has_quote}")
     if has_bracket > 0:
-        bbl_bounds = (3, 8)
+        bbl_bounds = (3, 10)
     else:
         bbl_bounds = (2, 8)
 
@@ -149,7 +149,6 @@ def main(oracle_cmd, guide_examples_folder,  log_file_name):
         import pickle
         pickle.dump(start_grammar.rules, open(log_file_name + ".gramdict", "wb"))
 
-
         print(f'Time spent in oracle calls: {oracle_time_spent}', file=f)
         print(f'Time spent in oracle calls: {oracle_time_spent}')
         print(f'Time spent building grammar: {build_time}s', file=f)
@@ -159,6 +158,7 @@ def main(oracle_cmd, guide_examples_folder,  log_file_name):
         print(f'Time breakdown: {get_times()}')
         print(f'Parse calls: {oracle_parse_calls}, {oracle_real_calls}')
         print(f'Parse calls: {oracle_parse_calls}, {oracle_real_calls}', file=f)
+        oracle.close()
 
 
 if __name__ == '__main__':
@@ -170,7 +170,7 @@ if __name__ == '__main__':
     internal_parser.add_argument('bench_folder', help='folder containing the benchmark', type=str)
     internal_parser.add_argument('log_file', help='name of file to write output log to', type=str)
 
-    external_parser.add_argument('oracle_cmd', help='the oracle command; should be invocable on a filename via `oracle_cmd filename`, and return a non-zero exit code on invalid inputs', type=str)
+    # external_parser.add_argument('oracle_cmd', help='the oracle command; should be invocable on a filename via `oracle_cmd filename`, and return a non-zero exit code on invalid inputs', type=str)
     external_parser.add_argument('examples_dir', help='folder containing the training examples', type=str)
     external_parser.add_argument('log_file', help='name of file to write output log to', type=str)
     external_parser.add_argument('--no-pretokenize',  help=f'assign each character to its own leaf node, rather than grouping characters of same lassc', action='store_true', dest='no_pretokenize')
@@ -188,7 +188,7 @@ if __name__ == '__main__':
             GROUP_PUNCTUATION = True
         if args.group_upper_lower:
             SPLIT_UPPER_AND_LOWER = False
-        main(args.oracle_cmd, args.examples_dir, args.log_file)
+        main(args.examples_dir, args.log_file)
     else:
         parser.print_help()
         exit(1)
