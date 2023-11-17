@@ -126,7 +126,7 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]], bracket_items: List, 
 
         children = []
         if root == False:
-            children.append(ParseNode(get_class[leaves[index].payload], False, [leaves[index]]))
+            children.append(ParseNode(leaves[index].payload, True, []))
             index+=1
         else:
             nonlocal bracket_items
@@ -140,7 +140,7 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]], bracket_items: List, 
                 child, index = braces_tree(leaves, index)
                 children.append(child)
             elif token == "}" or token == "]" or token == ")":
-                children.append(ParseNode(get_class[token], False, [node]))
+                children.append(ParseNode(token, True, []))
                 bracket_items.append(len(children))
                 return ParseNode(allocate_tid(), False, children), index
             else:
@@ -169,8 +169,10 @@ def build_naive_parse_trees(leaves: List[List[ParseNode]], bracket_items: List, 
             
             oracle.parse(new_children.derived_string())
 
-        except:
+        except Exception as e:
             print("\nInvalid seed input")
+            print(new_children.derived_string())
+            print(e)
             exit(1)
 
         # new_tree = ParseNode(START, False, new_children)

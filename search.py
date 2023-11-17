@@ -15,7 +15,7 @@ See __main__ dispatch at the bottom for usage.
 """
 
 USE_PRETOKENIZATION = True
-
+GROUP_WHITESPACE = True
 GROUP_PUNCTUATION = False
 SPLIT_UPPER_AND_LOWER = False
 quote = []
@@ -25,13 +25,12 @@ def approx_tokenize(guide_raw:str):
         if len(quote)==1:
             if c == quote[0]:
                 quote.pop()
-                return None
-            else:
-                return "LETTER"
+            return "LETTER"
         if c=="\"" or c=="\'":
             # don't group if there is no matching quote
             if c in guide_raw[idx+1:]:
                 quote.append(c)
+                return "LETTER"
             return None
         if not SPLIT_UPPER_AND_LOWER and c in string.ascii_letters:
             return "LETTER"
@@ -43,7 +42,7 @@ def approx_tokenize(guide_raw:str):
             return "DIGIT"
         if GROUP_PUNCTUATION and c in string.punctuation:
             return "PUNCTUATION"
-        if c in string.whitespace:
+        if GROUP_WHITESPACE and c in string.whitespace:
             return "WHITESPACE"
         else:
             return None

@@ -261,7 +261,8 @@ class ParseNode():
             return self.cached_string
 
         if self.is_terminal:
-            return fixup_terminal(self.payload)
+            # return fixup_terminal(self.payload)
+            return self.payload
         else:
             return ''.join([c.derived_string() for c in self.children])
 

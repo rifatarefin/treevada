@@ -42,7 +42,8 @@ class ExternalOracle:
         Does the work of calling the subprocess.
         """
         self.real_calls +=1
-        FNULL = io.StringIO()
+        ERR = io.StringIO()
+        OUT = io.StringIO()
         f = tempfile.NamedTemporaryFile(suffix='.mdl')
         f.write(bytes(string, 'utf-8'))
         f_name = f.name
@@ -50,14 +51,20 @@ class ExternalOracle:
         try:
             # With check = True, throws a CalledProcessError if the exit code is non-zero
             # subprocess.run([self.command, f_name], stdout=FNULL, stderr=FNULL, check=True)#, timeout=10)
-            model = self.eng.load_system(f_name, stderr = FNULL)
+            model = self.eng.load_system(f_name, stdout = OUT, stderr = ERR)
             # model = self.eng.bdroot()
 
             try :
-                self.eng.slreportgen.utils.compileModel(model, nargout = 0, stderr = FNULL)
+                self.eng.slreportgen.utils.compileModel(model, nargout = 0, stdout = OUT, stderr=ERR)
+                if 'error' in OUT.getvalue().lower():
+                    raise Exception
 
+                if not self.eng.slreportgen.utils.isModelCompiled(model, nargout = 1, stderr = ERR):
+                    # print("doesn't compile")
+                    shutil.copy2(f_name, './Exception/Compile')
+                    return False
                 try:
-                    self.eng.slreportgen.utils.uncompileModel(model, nargout = 0, stderr = FNULL)
+                    self.eng.slreportgen.utils.uncompileModel(model, nargout = 0, stderr = ERR)
                 except:
                     # print("doesn't uncompile")
                     shutil.copy2(f_name, './Exception/Uncompile')
@@ -69,7 +76,7 @@ class ExternalOracle:
                 return False
 
             try:
-                self.eng.close_system(model, nargout = 0, stderr = FNULL)
+                self.eng.close_system(model, nargout = 0, stderr = ERR)
                 return True
             
             except:
@@ -85,7 +92,7 @@ class ExternalOracle:
         finally:
 
             f.close()
-            FNULL.close()
+            ERR.close()
             if not self.eng:
                 print("restart matlab")
                 self.eng = matlab.engine.start_matlab()

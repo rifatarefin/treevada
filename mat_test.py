@@ -59,14 +59,15 @@ if __name__ == "__main__":
     # except TimeoutError:
     #     print("timeout")
     FNULL = open(os.devnull, 'w')
+    ERR = io.StringIO()
     eng = matlab.engine.start_matlab()
 
     try:
-        model = eng.load_system('sample.mdl', stderr = FNULL)
+        model = eng.load_system('sample.mdl', stdout = ERR)
     except Exception as e:
         print("catch")
         print(e)
     
-    print(warnings)
+    # print(ERR.getvalue())
     # eng.quit()
 
