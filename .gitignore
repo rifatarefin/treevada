@@ -21,6 +21,7 @@ micro-benchmarks/
 *.txt
 *.xlsx
 .vscode/*
+Exception/
 slog*
 tlog*
 runmicro*
