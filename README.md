@@ -6,7 +6,7 @@ Pull the Docker image from [here](https://hub.docker.com/r/marefin/treevada) to 
 docker pull marefin/treevada:v2
 docker run --rm -it marefin/treevada:v2
 ```
-`/treevada-artifact/Readme.md` contains detailed overview of the directory structure and how to run the scripts to reproduce the results.
+`/treevada-artifact/Readme.md` contains a detailed overview of the directory structure and how to run the scripts to reproduce the results.
 
 ## Building
 
