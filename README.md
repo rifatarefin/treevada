@@ -40,6 +40,19 @@ $ python3 eval.py external [-n PRECISION_SET_SIZE] ORACLE_CMD TRAIN_DIR LOG_FILE
 ```
 The Recall should be 1.0 in this case.
 
+## Citation
+
+If you find TreeVada useful in your research, please cite our work:
+```
+@inproceedings{arefin2024fast,
+  title={Fast Deterministic Black-box Context-free Grammar Inference},
+  author={Arefin, Mohammad Rifat and Shetiya, Suraj and Wang, Zili and Csallner, Christoph},
+  booktitle={Proceedings of the IEEE/ACM 46th International Conference on Software Engineering},
+  pages={1--12},
+  year={2024}
+}
+```
+
 ## Acknowledgements
 
 TreeVada is built upon its predecessor tool [Arvada](https://github.com/neil-kulkarni/arvada). Arvada is licensed under MIT license, please see the [Arvada License](https://github.com/neil-kulkarni/arvada/blob/master/LICENSE) for details. We thank the  developers [@carolemieux](https://github.com/carolemieux) and [@neil-kulkarni](https://github.com/neil-kulkarni) for their pioneering work.
