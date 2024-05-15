@@ -265,6 +265,13 @@ class ParseNode():
         else:
             return ''.join([c.derived_string() for c in self.children])
 
+    def to_newick(self):
+        if self.is_terminal:
+            return self.payload
+        else:
+            childre_str = ','.join([c.to_newick() for c in self.children])
+            return f'({childre_str}){self.payload}'
+        
     def copy(self):
         """
         Produces a new object that is logically equal to this ParseNode, but

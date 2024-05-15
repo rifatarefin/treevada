@@ -109,6 +109,7 @@ def main(oracle_cmd, guide_examples_folder,  log_file_name):
         except:
             print("\n xxxInvalid seed input")
             print(full_filename)
+            print(guide_raw)
             exit(1)
         if USE_PRETOKENIZATION:
             guide = approx_tokenize(guide_raw)

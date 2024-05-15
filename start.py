@@ -341,6 +341,10 @@ def build_trees(oracle, leaves):
     print("Beginning coalescing...".ljust(50))
     grammar, best_trees, _, _ = coalesce(oracle, best_trees, grammar)
     # grammar, best_trees, _ = coalesce_partial(oracle, best_trees, grammar)
+
+    for tree in best_trees:
+        print(tree.to_newick())
+        
     ORIGINAL_COALESCE_TIME += time.time() - s
 
 
