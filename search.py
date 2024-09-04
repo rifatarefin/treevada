@@ -30,7 +30,7 @@ def approx_tokenize(guide_raw:str):
                 return "LETTER"
         if c=="\"" or c=="\'":
             # don't group if there is no matching quote
-            if c in guide_raw[idx+1:]:
+            if idx+1 < len(guide_raw) and c in guide_raw[idx+1:]:
                 quote.append(c)
             return None
         if not SPLIT_UPPER_AND_LOWER and c in string.ascii_letters:

@@ -25,7 +25,7 @@ def is_balanced(tokens: str):
                     quote.pop()
                 continue
 
-            if (i == "\"" or i == "\'") and i in tokens[idx+1:]:    #there is another matching quote following
+            if (i == "\"" or i == "\'") and idx+1<len(tokens) and i in tokens[idx+1:]:    #there is another matching quote following
                 quote.append(i)
             elif i in open_list:
                 stack.append(i)
@@ -72,6 +72,9 @@ def group(trees, max_group_size, increment: bool, last_applied_bubble = None) ->
                 # if j - i == 2:
                 #     continue
                 tree_sublist = children_lst[i:j]
+                # discard a bubble if it's a single terminal
+                if len(tree_sublist) == 1 and tree_sublist[0].is_terminal:
+                    continue
 
                 # discard a bubble if it's not bracket balanced
                 stream = ''.join([child.derived_string() for child in tree_sublist])
